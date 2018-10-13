@@ -6,7 +6,7 @@
  * Time: 下午9:42
  */
 
-namespace rabbit\servers;
+namespace rabbit\server;
 
 
 interface BootInterface

@@ -6,7 +6,7 @@
  * Time: 18:35
  */
 
-namespace rabbit\servers;
+namespace rabbit\server;
 
 
 use rabbit\framework\contract\DispatcherInterface;
