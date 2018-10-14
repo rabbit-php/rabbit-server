@@ -62,7 +62,7 @@ abstract class Server
 
     protected function beforeStart()
     {
-        App::$server = $this->server;
+        App::setServer($this->server);
         foreach ($this->beforeStart as $name => $handle) {
             if (!$handle instanceof BootInterface) {
                 /**
