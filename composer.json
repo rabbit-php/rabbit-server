@@ -3,7 +3,8 @@
     "description": "rabbit server",
     "type": "library",
     "require": {
-        "rabbit/framework": "dev-master"
+        "rabbit/framework": "dev-master",
+        "psr/http-server-middleware": "^1.0"
     },
     "license": "MIT",
     "authors": [
