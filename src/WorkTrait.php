@@ -2,7 +2,7 @@
 
 namespace rabbit\server;
 
-use rabbit\framework\core\ObjectFactory;
+use rabbit\core\ObjectFactory;
 
 trait WorkTrait
 {

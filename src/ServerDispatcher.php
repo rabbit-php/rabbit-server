@@ -9,17 +9,9 @@
 namespace rabbit\server;
 
 
-use rabbit\framework\contract\DispatcherInterface;
+use rabbit\contract\DispatcherInterface;
 
 abstract class ServerDispatcher implements DispatcherInterface
 {
-    /**
-     * @var array
-     */
-    protected $preMiddleware = [];
 
-    /**
-     * @var array
-     */
-    protected $afterMiddleware = [];
 }
