@@ -9,6 +9,7 @@
 namespace rabbit\server;
 
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use rabbit\contract\DispatcherInterface;
 
@@ -18,4 +19,9 @@ abstract class ServerDispatcher implements DispatcherInterface
      * @var MiddlewareInterface[]
      */
     protected $middlewares = [];
+
+    /**
+     * @var ResponseInterface
+     */
+    protected $default;
 }

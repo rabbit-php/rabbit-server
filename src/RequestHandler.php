@@ -13,6 +13,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use rabbit\core\ObjectFactory;
 
 class RequestHandler implements RequestHandlerInterface
 {
@@ -37,9 +38,10 @@ class RequestHandler implements RequestHandlerInterface
      * @param array $middleware
      * @param string $default
      */
-    public function __construct(array $middleware)
+    public function __construct(array $middleware, MiddlewareInterface $default)
     {
         $this->middlewares = \array_unique($middleware);
+        $this->default = $default;
     }
 
     /**
