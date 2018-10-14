@@ -9,9 +9,13 @@
 namespace rabbit\server;
 
 
+use Psr\Http\Server\MiddlewareInterface;
 use rabbit\contract\DispatcherInterface;
 
 abstract class ServerDispatcher implements DispatcherInterface
 {
-
+    /**
+     * @var MiddlewareInterface[]
+     */
+    protected $middlewares = [];
 }
