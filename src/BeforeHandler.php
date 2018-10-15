@@ -15,7 +15,7 @@ class BeforeHandler implements BootInterface
 {
     public function handle()
     {
-        \Runtime::enableCoroutine();
+        \Swoole\Runtime::enableCoroutine();
         $swooleServer = App::getServer();
 
         //设置原子计数
