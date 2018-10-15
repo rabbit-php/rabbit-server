@@ -48,7 +48,7 @@ class RequestHandler implements RequestHandlerInterface
         if (!$handler instanceof MiddlewareInterface) {
             throw new \InvalidArgumentException('Invalid Handler. It must be an instance of MiddlewareInterface');
         }
-        Context::set('mwOffset', $offset);
+        Context::set('mwOffset', $offset + 1);
         return $handler->process($request, $this);
     }
 
