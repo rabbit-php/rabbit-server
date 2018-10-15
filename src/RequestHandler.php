@@ -13,6 +13,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use rabbit\core\Context;
 use rabbit\core\ObjectFactory;
 
 class RequestHandler implements RequestHandlerInterface
@@ -23,26 +24,9 @@ class RequestHandler implements RequestHandlerInterface
     private $middlewares;
 
     /**
-     * @var integer
-     */
-    private $offset = 0;
-
-    /**
      * @var MiddlewareInterface
      */
     private $default;
-
-    /**
-     * RequestHandler constructor.
-     *
-     * @param array $middleware
-     * @param string $default
-     */
-    public function __construct(array $middleware, MiddlewareInterface $default)
-    {
-        $this->middlewares = \array_unique($middleware);
-        $this->default = $default;
-    }
 
     /**
      * Process the request using the current middleware.
@@ -53,30 +37,19 @@ class RequestHandler implements RequestHandlerInterface
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        if (($this->default instanceof MiddlewareInterface) && empty($this->middlewares[$this->offset])) {
+        $offset = Context::get('mwOffset');
+        if (($this->default instanceof MiddlewareInterface) && empty($this->middlewares[$offset])) {
             $handler = $this->default;
         } else {
-            $handler = $this->middlewares[$this->offset];
+            $handler = $this->middlewares[$offset];
         }
         \is_string($handler) && $handler = ObjectFactory::get($handler);
 
         if (!$handler instanceof MiddlewareInterface) {
             throw new \InvalidArgumentException('Invalid Handler. It must be an instance of MiddlewareInterface');
         }
-
-        return $handler->process($request, $this->next());
-    }
-
-    /**
-     * Get a handler pointing to the next middleware.
-     *
-     * @return static
-     */
-    private function next()
-    {
-        $clone = clone $this;
-        $clone->offset++;
-        return $clone;
+        Context::set('mwOffset', $offset);
+        return $handler->process($request, $this);
     }
 
     /**

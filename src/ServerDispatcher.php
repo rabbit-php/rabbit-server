@@ -15,13 +15,4 @@ use rabbit\contract\DispatcherInterface;
 
 abstract class ServerDispatcher implements DispatcherInterface
 {
-    /**
-     * @var MiddlewareInterface[]
-     */
-    protected $middlewares = [];
-
-    /**
-     * @var ResponseInterface
-     */
-    protected $default;
 }
