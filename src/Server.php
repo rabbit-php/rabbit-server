@@ -70,7 +70,7 @@ abstract class Server
                  */
                 $handle = ObjectFactory::createObject($handle);
             }
-            $handle->handle($this);
+            $handle->handle();
         }
     }
 

@@ -11,5 +11,5 @@ namespace rabbit\server;
 
 interface BootInterface
 {
-    public function handle(Server $server = null);
+    public function handle();
 }

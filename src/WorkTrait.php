@@ -8,7 +8,6 @@ trait WorkTrait
 {
     public function workerStart($server = null, $worker_id)
     {
-//        \Swoole\Runtime::enableCoroutine();
         ObjectFactory::reload();
     }
 }
