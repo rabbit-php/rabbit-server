@@ -11,9 +11,13 @@ namespace rabbit\server;
 use Swoole\Atomic;
 use rabbit\App;
 
+/**
+ * Class BeforeHandler
+ * @package rabbit\server
+ */
 class BeforeHandler implements BootInterface
 {
-    public function handle()
+    public function handle(): void
     {
         \Swoole\Runtime::enableCoroutine();
         $swooleServer = App::getServer();

@@ -20,14 +20,22 @@ use rabbit\web\HttpException;
 
 class ErrorHandler implements ErrorHandlerInterface
 {
-    public function handle(\Throwable $throw)
+    /**
+     * @param \Throwable $throw
+     */
+    public function handle(\Throwable $throw): ResponseInterface
     {
         $response = $this->handleThrowtable($throw);
 
         return $response;
     }
 
-    private function handleThrowtable(\Throwable $throwable)
+    /**
+     * @param \Throwable $throwable
+     * @return ResponseInterface
+     * @throws \Exception
+     */
+    private function handleThrowtable(\Throwable $throwable): ResponseInterface
     {
         $message = self::convertExceptionToArray($throwable);
 
@@ -43,7 +51,12 @@ class ErrorHandler implements ErrorHandlerInterface
         return $response;
     }
 
-    protected function convertExceptionToArray($exception)
+    /**
+     * @param $exception
+     * @return array
+     * @throws \Exception
+     */
+    protected function convertExceptionToArray($exception): array
     {
         $array = [
             'name' => $exception instanceof Exception ? $exception->getName() : 'Exception',

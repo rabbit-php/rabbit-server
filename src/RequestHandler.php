@@ -16,6 +16,10 @@ use Psr\Http\Server\RequestHandlerInterface;
 use rabbit\core\Context;
 use rabbit\core\ObjectFactory;
 
+/**
+ * Class RequestHandler
+ * @package rabbit\server
+ */
 class RequestHandler implements RequestHandlerInterface
 {
     /**
@@ -29,11 +33,9 @@ class RequestHandler implements RequestHandlerInterface
     private $default;
 
     /**
-     * Process the request using the current middleware.
-     *
      * @param ServerRequestInterface $request
      * @return ResponseInterface
-     * @throws \InvalidArgumentException
+     * @throws \Exception
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
@@ -50,26 +52,5 @@ class RequestHandler implements RequestHandlerInterface
         }
         Context::set('mwOffset', $offset + 1);
         return $handler->process($request, $this);
-    }
-
-    /**
-     * Insert middlewares to the next position
-     *
-     * @param array $middlewares
-     * @param null $offset
-     * @return $this
-     */
-    public function insertMiddlewares(array $middlewares, $offset = null)
-    {
-        null === $offset && $offset = $this->offset;
-        $chunkArray = array_chunk($this->middlewares, $offset);
-        $after = [];
-        $before = $chunkArray[0];
-        if (isset($chunkArray[1])) {
-            $after = $chunkArray[1];
-        }
-        $middlewares = array_merge((array)$before, $middlewares, (array)$after);
-        $this->middlewares = $middlewares;
-        return $this;
     }
 }

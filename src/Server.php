@@ -12,9 +12,8 @@ use rabbit\App;
 use rabbit\core\ObjectFactory;
 
 /**
- * 基础的server实现
- *
- * @package yii\swoole\server
+ * Class Server
+ * @package rabbit\server
  */
 abstract class Server
 {
@@ -47,11 +46,9 @@ abstract class Server
     protected $beforeStart = [];
 
     /**
-     * 设置进程标题
-     *
-     * @param  $name
+     * @param string $name
      */
-    protected function setProcessTitle($name)
+    protected function setProcessTitle(string $name): void
     {
         if (function_exists('swoole_set_process_name')) {
             @swoole_set_process_name($name);
@@ -60,7 +57,11 @@ abstract class Server
         }
     }
 
-    protected function beforeStart()
+    /**
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
+     */
+    protected function beforeStart(): void
     {
         App::setServer($this->server);
         foreach ($this->beforeStart as $name => $handle) {
@@ -74,7 +75,10 @@ abstract class Server
         }
     }
 
-    public function stop()
+    /**
+     *
+     */
+    public function stop(): void
     {
         if ($this->server->setting['pid_file']) {
             $pid = file_get_contents($this->server->setting['pid_file']);
@@ -83,9 +87,9 @@ abstract class Server
     }
 
     /**
-     * @param $server
+     * @param \Swoole\Server $server
      */
-    public function onStart($server)
+    public function onStart(\Swoole\Server $server): void
     {
         $this->setProcessTitle($this->name . ': master');
         if ($this->server->setting['pid_file']) {
@@ -93,14 +97,21 @@ abstract class Server
         }
     }
 
-    public function onShutdown($server)
+    /**
+     * @param \Swoole\Server $server
+     */
+    public function onShutdown(\Swoole\Server $server): void
     {
         if ($this->server->setting['pid_file']) {
             unlink($this->server->setting['pid_file']);
         }
     }
 
-    public function onWorkerStart($server, $worker_id)
+    /**
+     * @param \Swoole\Server $server
+     * @param int $worker_id
+     */
+    public function onWorkerStart(\Swoole\Server $server, int $worker_id): void
     {
         if (!$server->taskworker) {
             //worker
@@ -112,75 +123,110 @@ abstract class Server
         $this->workerStart($server, $worker_id);
     }
 
-    public function onWorkerStop($server, $worker_id)
+    /**
+     * @param \Swoole\Server $server
+     * @param int $worker_id
+     */
+    public function onWorkerStop(\Swoole\Server $server, int $worker_id): void
     {
         if (extension_loaded('Zend OPcache')) {
             opcache_reset();
         }
     }
 
-    public function onConnect($server, $fd, $from_id)
-    {
-
-    }
-
-    public function onReceive($server, $fd, $from_id, $data)
-    {
-
-    }
-
-    public function onPacket($server, $data, array $client_info)
-    {
-
-    }
-
-    public function onClose($server, $fd, $from_id)
+    /**
+     * @param \Swoole\Server $server
+     * @param int $fd
+     * @param int $from_id
+     */
+    public function onConnect(\Swoole\Server $server, int $fd, int $from_id): void
     {
 
     }
 
     /**
-     * 处理异步任务
-     *
-     * @param swoole_server $serv
-     * @param mixed $task_id
-     * @param mixed $from_id
+     * @param \Swoole\Server $server
+     * @param int $fd
+     * @param int $from_id
      * @param string $data
      */
-    public function onTask($serv, $task_id, $from_id, $data)
+    public function onReceive(\Swoole\Server $server, int $fd, int $from_id, string $data): void
     {
+
     }
 
     /**
-     * 处理异步任务的结果
-     *
-     * @param swoole_server $serv
-     * @param mixed $task_id
+     * @param \Swoole\Server $server
+     * @param string $data
+     * @param array $client_info
+     */
+    public function onPacket(\Swoole\Server $server, string $data, array $client_info): void
+    {
+
+    }
+
+    /**
+     * @param \Swoole\Server $server
+     * @param int $fd
+     * @param int $from_id
+     */
+    public function onClose(\Swoole\Server $server, int $fd, int $from_id): void
+    {
+
+    }
+
+    /**
+     * @param \Swoole\Server $serv
+     * @param int $task_id
+     * @param int $from_id
      * @param string $data
      */
-    public function onFinish($serv, $task_id, $data)
+    public function onTask(\Swoole\Server $serv, int $task_id, int $from_id, string $data): void
     {
     }
 
-    public function onPipeMessage($server, $from_worker_id, $message)
+    /**
+     * @param \Swoole\Server $serv
+     * @param int $task_id
+     * @param string $data
+     */
+    public function onFinish(\Swoole\Server $serv, int $task_id, string $data): void
     {
-
     }
 
-    public function onWorkerError($serv, $worker_id, $worker_pid, $exit_code)
+    /**
+     * @param \Swoole\Server $server
+     * @param int $from_worker_id
+     * @param string $message
+     */
+    public function onPipeMessage(\Swoole\Server $server, int $from_worker_id, string $message): void
     {
 
     }
 
     /**
-     * @param $server
+     * @param \Swoole\Server $serv
+     * @param int $worker_id
+     * @param int $worker_pid
+     * @param int $exit_code
      */
-    public function onManagerStart($server)
+    public function onWorkerError(\Swoole\Server $serv, int $worker_id, int $worker_pid, int $exit_code): void
+    {
+
+    }
+
+    /**
+     * @param \Swoole\Server $server
+     */
+    public function onManagerStart(\Swoole\Server $server): void
     {
         $this->setProcessTitle($this->name . ': manager');
     }
 
-    public function onManagerStop($serv)
+    /**
+     * @param \Swoole\Server $serv
+     */
+    public function onManagerStop(\Swoole\Server $serv): void
     {
 
     }

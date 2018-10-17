@@ -18,6 +18,10 @@ use rabbit\core\Context;
 use rabbit\core\ObjectFactory;
 use rabbit\handler\ErrorHandlerInterface;
 
+/**
+ * Class ServerDispatcher
+ * @package rabbit\server
+ */
 class ServerDispatcher implements DispatcherInterface
 {
     /**
@@ -25,6 +29,12 @@ class ServerDispatcher implements DispatcherInterface
      */
     private $requestHandler;
 
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     * @throws \Exception
+     */
     public function dispatch(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         try {
@@ -42,14 +52,21 @@ class ServerDispatcher implements DispatcherInterface
         return $response;
     }
 
-    protected function beforeDispatch(RequestInterface $request, ResponseInterface $response)
+    /**
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     */
+    protected function beforeDispatch(RequestInterface $request, ResponseInterface $response):void
     {
         Context::set('request', $request);
         Context::set('response', $response);
         Context::set('mwOffset', 0);
     }
 
-    protected function afterDispatch(ResponseInterface $response)
+    /**
+     * @param ResponseInterface $response
+     */
+    protected function afterDispatch(ResponseInterface $response):void
     {
         $response->send();
         Context::release();

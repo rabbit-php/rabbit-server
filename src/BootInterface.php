@@ -11,5 +11,5 @@ namespace rabbit\server;
 
 interface BootInterface
 {
-    public function handle();
+    public function handle(): void;
 }
