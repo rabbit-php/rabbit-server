@@ -8,8 +8,8 @@
 
 namespace rabbit\server;
 
-use Swoole\Atomic;
 use rabbit\App;
+use Swoole\Atomic;
 
 /**
  * Class BeforeHandler

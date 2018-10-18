@@ -35,9 +35,9 @@ class ErrorHandler implements ErrorHandlerInterface
      * @return ResponseInterface
      * @throws \Exception
      */
-    private function handleThrowtable(\Throwable $throwable): ResponseInterface
+    private function handleThrowtable(\Throwable $exception): ResponseInterface
     {
-        $message = self::convertExceptionToArray($throwable);
+        $message = self::convertExceptionToArray($exception);
 
         /* @var ResponseInterface $response */
         $response = Context::get('response');
