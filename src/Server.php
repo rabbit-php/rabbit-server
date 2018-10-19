@@ -17,19 +17,6 @@ use rabbit\core\ObjectFactory;
  */
 abstract class Server
 {
-
-    use WorkTrait;
-
-    /**
-     * @var swoole_server
-     */
-    protected $server;
-
-    /**
-     * @var array 当前配置文件
-     */
-    protected $config = [];
-
     /**
      * @var array
      */
@@ -41,9 +28,66 @@ abstract class Server
     protected $name = 'rabbit';
 
     /**
+     * @var string
+     */
+    protected $host = '0.0.0.0';
+
+    /**
+     * @var int
+     */
+    protected $port = 80;
+
+    /**
+     * @var int
+     */
+    protected $type = SWOOLE_PROCESS;
+
+    /**
      * @var array
      */
     protected $beforeStart = [];
+
+    public function getHost(): string
+    {
+        return $this->host;
+    }
+
+    public function getPort(): int
+    {
+        return $this->port;
+    }
+
+    public function getType(): int
+    {
+        return $this->type;
+    }
+
+    public function start(): void
+    {
+        $this->startServer($this->createServer());
+    }
+
+    abstract protected function createServer(): \Swoole\Server;
+
+    protected function startServer(\Swoole\Server $server = null): void
+    {
+        App::setServer($server);
+        $server->on('start', [$this, 'onStart']);
+        $server->on('shutdown', [$this, 'onShutdown']);
+
+        $server->on('managerStart', [$this, 'onManagerStart']);
+
+        $server->on('workerStart', [$this, 'onWorkerStart']);
+        $server->on('workerStop', [$this, 'onWorkerStop']);
+        $server->on('workerError', [$this, 'onWorkerError']);
+
+
+        $server->on('task', [$this, 'onTask']);
+        $server->on('finish', [$this, 'onFinish']);
+
+        $server->on('pipeMessage', [$this, 'onPipeMessage']);
+        $this->beforeStart($server);
+    }
 
     /**
      * @param string $name
@@ -61,9 +105,8 @@ abstract class Server
      * @throws \DI\DependencyException
      * @throws \DI\NotFoundException
      */
-    protected function beforeStart(): void
+    protected function beforeStart(\Swoole\Server $server): void
     {
-        App::setServer($this->server);
         foreach ($this->beforeStart as $name => $handle) {
             if (!$handle instanceof BootInterface) {
                 /**
@@ -71,8 +114,13 @@ abstract class Server
                  */
                 $handle = ObjectFactory::createObject($handle);
             }
-            $handle->handle();
+            $handle->handle($this);
         }
+    }
+
+    public function workerStart($server = null, $worker_id): void
+    {
+        ObjectFactory::reload();
     }
 
     /**
@@ -80,8 +128,8 @@ abstract class Server
      */
     public function stop(): void
     {
-        if ($this->server->setting['pid_file']) {
-            $pid = file_get_contents($this->server->setting['pid_file']);
+        if (App::getServer()->setting['pid_file']) {
+            $pid = file_get_contents(App::getServer()->setting['pid_file']);
             \swoole_process::kill(intval($pid));
         }
     }
@@ -92,8 +140,8 @@ abstract class Server
     public function onStart(\Swoole\Server $server): void
     {
         $this->setProcessTitle($this->name . ': master');
-        if ($this->server->setting['pid_file']) {
-            file_put_contents($this->server->setting['pid_file'], $server->master_pid);
+        if ($server->setting['pid_file']) {
+            file_put_contents($server->setting['pid_file'], $server->master_pid);
         }
     }
 
@@ -102,8 +150,8 @@ abstract class Server
      */
     public function onShutdown(\Swoole\Server $server): void
     {
-        if ($this->server->setting['pid_file']) {
-            unlink($this->server->setting['pid_file']);
+        if ($server->setting['pid_file']) {
+            unlink($server->setting['pid_file']);
         }
     }
 
