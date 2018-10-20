@@ -9,6 +9,7 @@
 namespace rabbit\server;
 
 use rabbit\App;
+use rabbit\contract\DispatcherInterface;
 use rabbit\core\ObjectFactory;
 
 /**
@@ -41,6 +42,11 @@ abstract class Server
      * @var int
      */
     protected $type = SWOOLE_PROCESS;
+
+    /**
+     * @var DispatcherInterface
+     */
+    protected $dispatcher;
 
     /**
      * @var array
@@ -198,7 +204,7 @@ abstract class Server
      * @param int $from_id
      * @param string $data
      */
-    public function onReceive(\Swoole\Server $server, int $fd, int $from_id, string $data): void
+    public function onReceive(\Swoole\Server $server, int $fd, int $reactor_id, string $data): void
     {
 
     }

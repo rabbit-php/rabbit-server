@@ -38,7 +38,7 @@ class AddListener implements BootInterface
                 $port = App::getServer()->listen($server->getHost(), $server->getPort());
             }
             foreach ($method as $bind => $callBack) {
-                $port->on($bind, $callBack);
+                $port->on($bind, [$server, $callBack]);
             }
             $port->set($config);
         }
