@@ -28,10 +28,6 @@ class AddListener implements BootInterface
         foreach ($this->listen as $schme => $data) {
             list($server, $type, $method) = $data;
             $config = ObjectFactory::get($schme);
-            /**
-             * @var Server $server
-             */
-            $server = ObjectFactory::get($server);
             if ($type) {
                 $port = App::getServer()->listen($server->getHost(), $server->getPort(), $type);
             } else {
