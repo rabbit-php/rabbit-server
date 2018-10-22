@@ -11,7 +11,6 @@ namespace rabbit\server;
 
 use rabbit\App;
 use rabbit\core\ObjectFactory;
-use rabbit\helper\ArrayHelper;
 
 class AddListener implements BootInterface
 {
