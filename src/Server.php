@@ -53,28 +53,58 @@ abstract class Server
      */
     protected $beforeStart = [];
 
+    /**
+     * @var array
+     */
+    protected $exit = [];
+
+    public function __construct()
+    {
+        $this->name = ObjectFactory::get("appName", $this->name, false);
+    }
+
+    /**
+     * @return string
+     */
     public function getHost(): string
     {
         return $this->host;
     }
 
+    /**
+     * @return int
+     */
     public function getPort(): int
     {
         return $this->port;
     }
 
+    /**
+     * @return int
+     */
     public function getType(): int
     {
         return $this->type;
     }
 
+    /**
+     *
+     */
     public function start(): void
     {
         $this->startServer($this->createServer());
     }
 
+    /**
+     * @return \Swoole\Server
+     */
     abstract protected function createServer(): \Swoole\Server;
 
+    /**
+     * @param \Swoole\Server|null $server
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
+     */
     protected function startServer(\Swoole\Server $server = null): void
     {
         App::setServer($server);
@@ -120,10 +150,16 @@ abstract class Server
                  */
                 $handle = ObjectFactory::createObject($handle);
             }
-            $handle->handle($this);
+            $handle->handle();
         }
     }
 
+    /**
+     * @param null $server
+     * @param $worker_id
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
+     */
     public function workerStart($server = null, $worker_id): void
     {
         ObjectFactory::reload();
@@ -185,6 +221,19 @@ abstract class Server
     {
         if (extension_loaded('Zend OPcache')) {
             opcache_reset();
+        }
+    }
+
+    public function onWorkerExit(\Swoole\Server $server, int $worker_id)
+    {
+        foreach ($this->exit as $name => $handle) {
+            if (!$handle instanceof WorkExitInterface) {
+                /**
+                 * @var BootInterface $handle
+                 */
+                $handle = ObjectFactory::createObject($handle);
+            }
+            $handle->handle($worker_id);
         }
     }
 

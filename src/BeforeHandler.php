@@ -17,6 +17,9 @@ use Swoole\Atomic;
  */
 class BeforeHandler implements BootInterface
 {
+    /**
+     *
+     */
     public function handle(): void
     {
         \Swoole\Runtime::enableCoroutine();

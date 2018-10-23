@@ -8,8 +8,14 @@
 
 namespace rabbit\server;
 
-
+/**
+ * Interface BootInterface
+ * @package rabbit\server
+ */
 interface BootInterface
 {
+    /**
+     *
+     */
     public function handle(): void;
 }
