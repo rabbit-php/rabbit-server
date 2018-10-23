@@ -56,7 +56,12 @@ abstract class Server
     /**
      * @var array
      */
-    protected $exit = [];
+    protected $workerExit = [];
+
+    /**
+     * @var array
+     */
+    protected $workerStart = [];
 
     public function __construct()
     {
@@ -155,14 +160,23 @@ abstract class Server
     }
 
     /**
-     * @param null $server
-     * @param $worker_id
+     * @param \Swoole\Server $server
+     * @param int $worker_id
      * @throws \DI\DependencyException
      * @throws \DI\NotFoundException
      */
-    public function workerStart($server = null, $worker_id): void
+    public function workerStart(\Swoole\Server $server,int $worker_id): void
     {
         ObjectFactory::reload();
+        foreach ($this->workerStart as $name => $handle) {
+            if (!$handle instanceof WorkerHandlerInterface) {
+                /**
+                 * @var WorkerHandlerInterface $handle
+                 */
+                $handle = ObjectFactory::createObject($handle);
+            }
+            $handle->handle($worker_id);
+        }
     }
 
     /**
@@ -226,8 +240,8 @@ abstract class Server
 
     public function onWorkerExit(\Swoole\Server $server, int $worker_id)
     {
-        foreach ($this->exit as $name => $handle) {
-            if (!$handle instanceof WorkExitInterface) {
+        foreach ($this->workerExit as $name => $handle) {
+            if (!$handle instanceof WorkerHandlerInterface) {
                 /**
                  * @var BootInterface $handle
                  */

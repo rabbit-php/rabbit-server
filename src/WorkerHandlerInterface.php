@@ -9,10 +9,10 @@
 namespace rabbit\server;
 
 /**
- * Class WorkExitInterface
+ * Class WorkerHandlerInterface
  * @package rabbit\server
  */
-interface WorkExitInterface
+interface WorkerHandlerInterface
 {
     /**
      * @param int $worker_id
