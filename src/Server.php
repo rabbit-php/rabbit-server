@@ -65,7 +65,7 @@ abstract class Server
 
     public function __construct()
     {
-        $this->name = ObjectFactory::get("appName", $this->name, false);
+        $this->name = ObjectFactory::get("appName", false, $this->name);
     }
 
     /**

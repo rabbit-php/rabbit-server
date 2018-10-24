@@ -63,7 +63,7 @@ class ErrorHandler implements ErrorHandlerInterface
             'message' => $exception->getMessage(),
             'code' => $exception->getCode(),
         ];
-        if (ObjectFactory::get('debug')) {
+        if (ObjectFactory::get('debug', false)) {
             $array['type'] = get_class($exception);
             if (!$exception instanceof UserException) {
                 $array['file'] = $exception->getFile();
