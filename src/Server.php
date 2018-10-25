@@ -167,7 +167,7 @@ abstract class Server
      */
     public function workerStart(\Swoole\Server $server,int $worker_id): void
     {
-        ObjectFactory::reload();
+//        ObjectFactory::reload();
         foreach ($this->workerStart as $name => $handle) {
             if (!$handle instanceof WorkerHandlerInterface) {
                 /**
