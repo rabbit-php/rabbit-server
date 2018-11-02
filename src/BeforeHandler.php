@@ -8,7 +8,6 @@
 
 namespace rabbit\server;
 
-use rabbit\App;
 use Swoole\Atomic;
 
 /**
@@ -23,10 +22,6 @@ class BeforeHandler implements BootInterface
     public function handle(): void
     {
         \Swoole\Runtime::enableCoroutine();
-        $app = App::getApp();
-
-        //设置原子计数
-        $app->atomic = new Atomic(0);
     }
 
 }
