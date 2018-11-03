@@ -20,10 +20,4 @@ class AttributeEnum
      * @var string
      */
     const RESPONSE_ATTRIBUTE = 'responseAttribute';
-
-    /**
-     * @var string
-     */
-    const TRACE_ATTRIBUTE = 'traceAttribute';
-
 }
