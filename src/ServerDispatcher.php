@@ -37,9 +37,9 @@ class ServerDispatcher implements DispatcherInterface
      */
     public function dispatch(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
+        $this->beforeDispatch($request, $response);
         try {
             // before dispatcher
-            $this->beforeDispatch($request, $response);
             $response = $this->requestHandler->handle($request);
         } catch (\Throwable $throw) {
             /**

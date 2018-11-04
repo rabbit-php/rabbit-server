@@ -41,6 +41,9 @@ class ErrorHandler implements ErrorHandlerInterface
 
         /* @var ResponseInterface $response */
         $response = Context::get('response');
+        if ($response === null) {
+            throw $exception;
+        }
         if ($exception instanceof HttpException) {
             $response = $response->withStatus($exception->statusCode);
         } else {
