@@ -40,7 +40,8 @@ class ServerDispatcher implements DispatcherInterface
         $this->beforeDispatch($request, $response);
         try {
             // before dispatcher
-            $response = $this->requestHandler->handle($request);
+            $requestHandler = clone $this->requestHandler;
+            $response = $requestHandler->handle($request);
         } catch (\Throwable $throw) {
             /**
              * @var ErrorHandlerInterface $errorHandler
@@ -56,17 +57,16 @@ class ServerDispatcher implements DispatcherInterface
      * @param RequestInterface $request
      * @param ResponseInterface $response
      */
-    protected function beforeDispatch(RequestInterface $request, ResponseInterface $response):void
+    protected function beforeDispatch(RequestInterface $request, ResponseInterface $response): void
     {
         Context::set('request', $request);
         Context::set('response', $response);
-        Context::set('mwOffset', 0);
     }
 
     /**
      * @param ResponseInterface $response
      */
-    protected function afterDispatch(ResponseInterface $response):void
+    protected function afterDispatch(ResponseInterface $response): void
     {
         $response->send();
         Context::release();

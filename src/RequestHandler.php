@@ -31,6 +31,10 @@ class RequestHandler implements RequestHandlerInterface
      * @var MiddlewareInterface
      */
     private $default;
+    /**
+     * @var int
+     */
+    private $offset = 0;
 
     /**
      * @param ServerRequestInterface $request
@@ -39,18 +43,17 @@ class RequestHandler implements RequestHandlerInterface
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $offset = Context::get('mwOffset');
-        if (($this->default instanceof MiddlewareInterface) && empty($this->middlewares[$offset])) {
+        if (($this->default instanceof MiddlewareInterface) && empty($this->middlewares[$this->offset])) {
             $handler = $this->default;
         } else {
-            $handler = $this->middlewares[$offset];
+            $handler = $this->middlewares[$this->offset];
         }
         \is_string($handler) && $handler = ObjectFactory::get($handler);
 
         if (!$handler instanceof MiddlewareInterface) {
             throw new \InvalidArgumentException('Invalid Handler. It must be an instance of MiddlewareInterface');
         }
-        Context::set('mwOffset', $offset + 1);
+        $this->offset++;
         return $handler->process($request, $this);
     }
 }
