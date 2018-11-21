@@ -15,6 +15,7 @@ use rabbit\core\Exception;
 use rabbit\core\ObjectFactory;
 use rabbit\core\UserException;
 use rabbit\handler\ErrorHandlerInterface;
+use rabbit\helper\ExceptionHelper;
 use rabbit\helper\JsonHelper;
 use rabbit\web\HttpException;
 
@@ -37,7 +38,7 @@ class ErrorHandler implements ErrorHandlerInterface
      */
     private function handleThrowtable(\Throwable $exception): ResponseInterface
     {
-        $message = self::convertExceptionToArray($exception);
+        $message = ExceptionHelper::convertExceptionToArray($exception);
 
         /* @var ResponseInterface $response */
         $response = Context::get('response');
@@ -52,33 +53,6 @@ class ErrorHandler implements ErrorHandlerInterface
         $response = $response->withContent(JsonHelper::encode($message));
 
         return $response;
-    }
-
-    /**
-     * @param $exception
-     * @return array
-     * @throws \Exception
-     */
-    protected function convertExceptionToArray($exception): array
-    {
-        $array = [
-            'name' => $exception instanceof Exception ? $exception->getName() : 'Exception',
-            'message' => $exception->getMessage(),
-            'code' => $exception->getCode(),
-        ];
-        if (ObjectFactory::get('debug', false)) {
-            $array['type'] = get_class($exception);
-            if (!$exception instanceof UserException) {
-                $array['file'] = $exception->getFile();
-                $array['line'] = $exception->getLine();
-                $array['stack-trace'] = explode("\n", $exception->getTraceAsString());
-            }
-        }
-        if (($prev = $exception->getPrevious()) !== null) {
-            $array['previous'] = $this->convertExceptionToArray($prev);
-        }
-
-        return $array;
     }
 
 }
