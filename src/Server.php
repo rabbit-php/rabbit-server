@@ -12,7 +12,6 @@ use rabbit\App;
 use rabbit\contract\DispatcherInterface;
 use rabbit\core\ObjectFactory;
 use rabbit\helper\ArrayHelper;
-use rabbit\helper\CoroHelper;
 
 /**
  * Class Server
