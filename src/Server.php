@@ -64,10 +64,6 @@ abstract class Server
      * @var array
      */
     protected $workerStart = [];
-    /**
-     * @var array
-     */
-    protected $defer = [];
 
     /** @var array */
     protected $setting = [];
@@ -293,7 +289,7 @@ abstract class Server
      */
     public function onReceive(\Swoole\Server $server, int $fd, int $reactor_id, string $data): void
     {
-        CoroHelper::defer($this->defer);
+
     }
 
     /**
@@ -304,7 +300,7 @@ abstract class Server
      */
     public function onRequest(\Swoole\Http\Request $request, \Swoole\Http\Response $response): void
     {
-        CoroHelper::defer($this->defer);
+
     }
 
     /**
@@ -315,7 +311,7 @@ abstract class Server
      */
     function onMessage(swoole_websocket_server $server, swoole_websocket_frame $frame): void
     {
-        CoroHelper::defer($this->defer);
+
     }
 
     /**
@@ -327,7 +323,6 @@ abstract class Server
      */
     public function onPacket(\Swoole\Server $server, string $data, array $client_info): void
     {
-        CoroHelper::defer($this->defer);
     }
 
     /**
