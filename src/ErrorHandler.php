@@ -11,9 +11,6 @@ namespace rabbit\server;
 
 use Psr\Http\Message\ResponseInterface;
 use rabbit\core\Context;
-use rabbit\core\Exception;
-use rabbit\core\ObjectFactory;
-use rabbit\core\UserException;
 use rabbit\handler\ErrorHandlerInterface;
 use rabbit\helper\ExceptionHelper;
 use rabbit\helper\JsonHelper;

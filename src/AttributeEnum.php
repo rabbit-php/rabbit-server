@@ -20,4 +20,18 @@ class AttributeEnum
      * @var string
      */
     const RESPONSE_ATTRIBUTE = 'responseAttribute';
+
+    /**
+     * The attribute of requesId
+     *
+     * @var string
+     */
+    const REQUESTID_ATTRIBUTE = 'requestId';
+
+    /**
+     * The attribute of connectFd
+     *
+     * @var int
+     */
+    const CONNECT_FD = 'connectFd';
 }

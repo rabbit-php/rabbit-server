@@ -11,6 +11,8 @@ namespace rabbit\server;
 use rabbit\App;
 use rabbit\contract\DispatcherInterface;
 use rabbit\core\ObjectFactory;
+use rabbit\helper\ArrayHelper;
+use rabbit\helper\CoroHelper;
 
 /**
  * Class Server
@@ -62,9 +64,22 @@ abstract class Server
      * @var array
      */
     protected $workerStart = [];
+    /**
+     * @var array
+     */
+    protected $defer = [];
 
-    public function __construct()
+    /** @var array */
+    protected $setting = [];
+
+    /**
+     * Server constructor.
+     * @param array $setting
+     * @throws \Exception
+     */
+    public function __construct(array $setting = [])
     {
+        $this->setting = ArrayHelper::merge(ObjectFactory::get('server.setting', false, []), $setting);
         $this->name = ObjectFactory::get("appName", false, $this->name);
     }
 
@@ -127,6 +142,7 @@ abstract class Server
         $server->on('finish', [$this, 'onFinish']);
 
         $server->on('pipeMessage', [$this, 'onPipeMessage']);
+        $server->set($this->setting);
         $this->beforeStart($server);
     }
 
@@ -165,7 +181,7 @@ abstract class Server
      * @throws \DI\DependencyException
      * @throws \DI\NotFoundException
      */
-    public function workerStart(\Swoole\Server $server,int $worker_id): void
+    public function workerStart(\Swoole\Server $server, int $worker_id): void
     {
 //        ObjectFactory::reload();
         foreach ($this->workerStart as $name => $handle) {
@@ -238,6 +254,12 @@ abstract class Server
         }
     }
 
+    /**
+     * @param \Swoole\Server $server
+     * @param int $worker_id
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
+     */
     public function onWorkerExit(\Swoole\Server $server, int $worker_id)
     {
         foreach ($this->workerExit as $name => $handle) {
@@ -264,22 +286,48 @@ abstract class Server
     /**
      * @param \Swoole\Server $server
      * @param int $fd
-     * @param int $from_id
+     * @param int $reactor_id
      * @param string $data
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
      */
     public function onReceive(\Swoole\Server $server, int $fd, int $reactor_id, string $data): void
     {
+        CoroHelper::defer($this->defer);
+    }
 
+    /**
+     * @param \Swoole\Http\Request $request
+     * @param \Swoole\Http\Response $response
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
+     */
+    public function onRequest(\Swoole\Http\Request $request, \Swoole\Http\Response $response): void
+    {
+        CoroHelper::defer($this->defer);
+    }
+
+    /**
+     * @param swoole_websocket_server $server
+     * @param swoole_websocket_frame $frame
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
+     */
+    function onMessage(swoole_websocket_server $server, swoole_websocket_frame $frame): void
+    {
+        CoroHelper::defer($this->defer);
     }
 
     /**
      * @param \Swoole\Server $server
      * @param string $data
      * @param array $client_info
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
      */
     public function onPacket(\Swoole\Server $server, string $data, array $client_info): void
     {
-
+        CoroHelper::defer($this->defer);
     }
 
     /**
@@ -314,11 +362,11 @@ abstract class Server
     /**
      * @param \Swoole\Server $server
      * @param int $from_worker_id
-     * @param string $message
+     * @param $message
      */
-    public function onPipeMessage(\Swoole\Server $server, int $from_worker_id, string $message): void
+    public function onPipeMessage(\Swoole\Server $server, int $from_worker_id, mixed $message): void
     {
-
+        call_user_func($message);
     }
 
     /**
