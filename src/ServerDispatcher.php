@@ -27,7 +27,7 @@ class ServerDispatcher implements DispatcherInterface
     /**
      * @var RequestHandlerInterface
      */
-    private $requestHandler;
+    protected $requestHandler;
 
     /**
      * @param ServerRequestInterface $request
