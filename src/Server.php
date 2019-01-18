@@ -179,6 +179,9 @@ abstract class Server
     public function workerStart(\Swoole\Server $server, int $worker_id): void
     {
 //        ObjectFactory::reload();
+        if (extension_loaded('Zend OPcache')) {
+            opcache_reset();
+        }
         foreach ($this->workerStart as $name => $handle) {
             if (!$handle instanceof WorkerHandlerInterface) {
                 /**
