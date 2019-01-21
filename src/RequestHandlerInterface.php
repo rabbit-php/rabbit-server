@@ -8,11 +8,13 @@
 
 namespace rabbit\server;
 
+use Psr\Http\Message\ServerRequestInterface;
+
 /**
  * Interface RequestHandlerInterface
  * @package rabbit\server
  */
 interface RequestHandlerInterface
 {
-    public function __invoke(array $params = []);
+    public function __invoke(array $params = [], ServerRequestInterface $request = null);
 }
