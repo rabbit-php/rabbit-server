@@ -306,12 +306,21 @@ abstract class Server
     }
 
     /**
-     * @param swoole_websocket_server $server
-     * @param swoole_websocket_frame $frame
+     * @param swoole_WebSocket_server $server
+     * @param swoole_WebSocket_frame $frame
      * @throws \DI\DependencyException
      * @throws \DI\NotFoundException
      */
-    function onMessage(\Swoole\Wbsocket\Server $server, \Swoole\Websocket\Frame $frame): void
+    public function onMessage(\Swoole\WebSocket\Server $server, \Swoole\WebSocket\Frame $frame): void
+    {
+
+    }
+
+    /**
+     * @param \Swoole\WebSocket\Server $server
+     * @param \Swoole\Http\Request $request
+     */
+    public function onOpen(\Swoole\WebSocket\Server $server, \Swoole\Http\Request $request): void
     {
 
     }
