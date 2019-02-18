@@ -325,6 +325,11 @@ abstract class Server
 
     }
 
+    function onHandShake(\Swoole\WebSocket\Server $request, \Swoole\Http\Response $response): bool
+    {
+        
+    }
+
     /**
      * @param \Swoole\Server $server
      * @param string $data
