@@ -311,7 +311,7 @@ abstract class Server
      * @throws \DI\DependencyException
      * @throws \DI\NotFoundException
      */
-    function onMessage(swoole_websocket_server $server, swoole_websocket_frame $frame): void
+    function onMessage(\Swoole\Wbsocket\Server $server, \Swoole\Websocket\Frame $frame): void
     {
 
     }
