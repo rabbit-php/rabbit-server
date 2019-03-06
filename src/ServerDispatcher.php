@@ -69,6 +69,5 @@ class ServerDispatcher implements DispatcherInterface
     protected function afterDispatch(ResponseInterface $response): void
     {
         $response->send();
-        Context::release();
     }
 }
