@@ -24,8 +24,8 @@ class AddListener implements BootInterface
      */
     public function handle(): void
     {
-        foreach ($this->listen as $schme => $data) {
-            list($server, $type, $method) = $data;
+        foreach ($this->listen as $name => $data) {
+            list($server, $type, $method, $schme) = $data;
             $config = ObjectFactory::get($schme);
             if ($type) {
                 $port = App::getServer()->listen($server->getHost(), $server->getPort(), $type);
