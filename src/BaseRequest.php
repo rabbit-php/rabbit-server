@@ -6,7 +6,7 @@
  * Time: 20:06
  */
 
-namespace rabbit\wsserver;
+namespace rabbit\server;
 
 
 use Psr\Http\Message\ServerRequestInterface;
@@ -16,7 +16,7 @@ use rabbit\web\Uri;
 
 /**
  * Class BaseRequest
- * @package rabbit\wsserver
+ * @package rabbit\server
  */
 class BaseRequest implements ServerRequestInterface
 {
