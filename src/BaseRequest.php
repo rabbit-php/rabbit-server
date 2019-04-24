@@ -100,7 +100,7 @@ class BaseRequest implements ServerRequestInterface
      */
     public function withAttribute($name, $value)
     {
-        $clone = $this;
+        $clone = &$this;
         $clone->attributes[$name] = $value;
         return $clone;
     }
@@ -111,7 +111,7 @@ class BaseRequest implements ServerRequestInterface
      */
     public function withParsedBody($data)
     {
-        $clone = $this;
+        $clone = &$this;
         $clone->parsedBody = $data;
         return $clone;
     }
@@ -122,7 +122,7 @@ class BaseRequest implements ServerRequestInterface
      */
     public function withQueryParams(array $query)
     {
-        $clone = $this;
+        $clone = &$this;
         $clone->queryParams = $query;
         return $clone;
     }
@@ -210,7 +210,7 @@ class BaseRequest implements ServerRequestInterface
      */
     public function withServerParams(array $serverParams): Request
     {
-        $clone = $this;
+        $clone = &$this;
         $clone->serverParams = $serverParams;
         return $clone;
     }
@@ -221,7 +221,7 @@ class BaseRequest implements ServerRequestInterface
      */
     public function withCookieParams(array $cookies)
     {
-        $clone = $this;
+        $clone = &$this;
         $clone->cookieParams = $cookies;
         return $clone;
     }
@@ -264,7 +264,7 @@ class BaseRequest implements ServerRequestInterface
      */
     public function withUploadedFiles(array $uploadedFiles)
     {
-        $clone = $this;
+        $clone = &$this;
         $clone->uploadedFiles = $uploadedFiles;
         return $clone;
     }
@@ -305,7 +305,7 @@ class BaseRequest implements ServerRequestInterface
             return $this;
         }
 
-        $clone = $this;
+        $clone = &$this;
         unset($clone->attributes[$name]);
 
         return $clone;
@@ -341,7 +341,7 @@ class BaseRequest implements ServerRequestInterface
             throw new \InvalidArgumentException('Invalid request target provided; cannot contain whitespace');
         }
 
-        $clone = $this;
+        $clone = &$this;
         $clone->requestTarget = $requestTarget;
         return $clone;
     }
@@ -365,7 +365,7 @@ class BaseRequest implements ServerRequestInterface
         if (!in_array($method, $methods)) {
             throw new \InvalidArgumentException('Invalid Method');
         }
-        $clone = $this;
+        $clone = &$this;
         $clone->method = $method;
         return $clone;
     }
@@ -389,7 +389,7 @@ class BaseRequest implements ServerRequestInterface
             return $this;
         }
 
-        $clone = $this;
+        $clone = &$this;
         $clone->uri = $uri;
 
         if (!$preserveHost) {
