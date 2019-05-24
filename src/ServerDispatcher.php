@@ -47,7 +47,7 @@ class ServerDispatcher implements DispatcherInterface
              * @var ErrorHandlerInterface $errorHandler
              */
             $errorHandler = ObjectFactory::get('errorHandler');
-            $response = $errorHandler->handle($throw, $response);
+            $response = $errorHandler->handle($throw);
         }
         $this->afterDispatch($response);
         return $response;

@@ -35,13 +35,12 @@ class ErrorHandler implements ErrorHandlerInterface
      */
     private function handleThrowtable(\Throwable $exception): ResponseInterface
     {
-        $message = ExceptionHelper::convertExceptionToArray($exception);
-
         /* @var ResponseInterface $response */
-        $response = Context::get('response');
+        $response = Context::get('response', false);
         if ($response === null) {
             throw $exception;
         }
+        $message = ExceptionHelper::convertExceptionToArray($exception);
         if ($exception instanceof HttpException) {
             $response = $response->withStatus($exception->statusCode);
         } else {
