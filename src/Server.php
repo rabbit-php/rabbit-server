@@ -325,7 +325,7 @@ abstract class Server
 
     }
 
-    function onHandShake(\Swoole\WebSocket\Server $request, \Swoole\Http\Response $response): bool
+    function onHandShake(\Swoole\Http\Request $request, \Swoole\Http\Response $response): bool
     {
         
     }
