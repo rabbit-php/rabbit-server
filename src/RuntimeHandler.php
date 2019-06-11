@@ -8,18 +8,16 @@
 
 namespace rabbit\server;
 
-use Swoole\Atomic;
-
 /**
- * Class BeforeHandler
+ * Class RuntimeHandler
  * @package rabbit\server
  */
-class BeforeHandler implements BootInterface
+class RuntimeHandler implements WorkerHandlerInterface
 {
     /**
      *
      */
-    public function handle(): void
+    public function handle(int $worker_id): void
     {
         \Swoole\Runtime::enableCoroutine();
     }
