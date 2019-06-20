@@ -200,7 +200,7 @@ abstract class Server
     {
         if (App::getServer()->setting['pid_file']) {
             $pid = file_get_contents(App::getServer()->setting['pid_file']);
-            \swoole_process::kill(intval($pid));
+            \Swoole\Process::kill(intval($pid));
         }
     }
 
@@ -306,10 +306,8 @@ abstract class Server
     }
 
     /**
-     * @param swoole_WebSocket_server $server
-     * @param swoole_WebSocket_frame $frame
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
+     * @param \Swoole\WebSocket\Server $server
+     * @param \Swoole\WebSocket\Frame $frame
      */
     public function onMessage(\Swoole\WebSocket\Server $server, \Swoole\WebSocket\Frame $frame): void
     {
