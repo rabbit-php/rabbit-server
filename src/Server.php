@@ -10,6 +10,7 @@ namespace rabbit\server;
 
 use rabbit\App;
 use rabbit\contract\DispatcherInterface;
+use rabbit\contract\TaskInterface;
 use rabbit\core\ObjectFactory;
 use rabbit\helper\ArrayHelper;
 
@@ -66,6 +67,8 @@ abstract class Server
 
     /** @var array */
     protected $setting = [];
+    /** @var TaskInterface */
+    protected $taskHandle;
 
     /**
      * Server constructor.
@@ -137,6 +140,9 @@ abstract class Server
         $server->on('finish', [$this, 'onFinish']);
 
         $server->on('pipeMessage', [$this, 'onPipeMessage']);
+        if ($this->taskHandle !== null && !isset($this->setting['task_worker_num'])) {
+            $this->setting['task_worker_num'] = swoole_cpu_num();
+        }
         $server->set($this->setting);
         $this->beforeStart($server);
     }
@@ -323,9 +329,9 @@ abstract class Server
 
     }
 
-    function onHandShake(\Swoole\Http\Request $request, \Swoole\Http\Response $response): bool
+    public function onHandShake(\Swoole\Http\Request $request, \Swoole\Http\Response $response): bool
     {
-        
+
     }
 
     /**
@@ -354,9 +360,11 @@ abstract class Server
      * @param int $task_id
      * @param int $from_id
      * @param string $data
+     * @return mixed
      */
-    public function onTask(\Swoole\Server $serv, int $task_id, int $from_id, string $data): void
+    public function onTask(\Swoole\Server $serv, int $task_id, int $from_id, $data)
     {
+        return $this->taskHandle->handle($task_id, $from_id, $data);
     }
 
     /**
