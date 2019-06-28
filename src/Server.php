@@ -134,14 +134,18 @@ abstract class Server
         $server->on('workerStart', [$this, 'onWorkerStart']);
         $server->on('workerStop', [$this, 'onWorkerStop']);
         $server->on('workerError', [$this, 'onWorkerError']);
-
-
-        $server->on('task', [$this, 'onTask']);
         $server->on('finish', [$this, 'onFinish']);
 
         $server->on('pipeMessage', [$this, 'onPipeMessage']);
         if ($this->taskHandle !== null && !isset($this->setting['task_worker_num'])) {
             $this->setting['task_worker_num'] = swoole_cpu_num();
+        }
+        if (isset($this->setting['task_worker_num']) && $this->setting['task_worker_num'] > 0) {
+            if (isset($this->setting['task_enable_coroutine']) && $this->setting['task_enable_coroutine']) {
+                $server->on('task', [$this, 'onTaskCo']);
+            } else {
+                $server->on('task', [$this, 'onTask']);
+            }
         }
         $server->set($this->setting);
         $this->beforeStart($server);
@@ -365,6 +369,16 @@ abstract class Server
     public function onTask(\Swoole\Server $serv, int $task_id, int $from_id, $data)
     {
         return $this->taskHandle->handle($task_id, $from_id, $data);
+    }
+
+    /**
+     * @param \Swoole\Server $serv
+     * @param \Swoole\Server\Task $task
+     * @return mixed
+     */
+    public function onTaskCo(\Swoole\Server $serv, \Swoole\Server\Task $task)
+    {
+        return $this->taskHandle->handle($task->id, $task->worker_id, $task->data);
     }
 
     /**
