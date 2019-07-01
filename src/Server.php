@@ -363,22 +363,31 @@ abstract class Server
      * @param \Swoole\Server $serv
      * @param int $task_id
      * @param int $from_id
-     * @param string $data
-     * @return mixed
+     * @param $data
+     * @return \Exception|string|\Throwable
      */
     public function onTask(\Swoole\Server $serv, int $task_id, int $from_id, $data)
     {
-        return $this->taskHandle->handle($task_id, $from_id, $data);
+        try {
+            $result = $this->taskHandle->handle($task_id, $from_id, $data);
+            return $result === null ? '' : $result;
+        } catch (\Throwable $throwable) {
+            return $throwable;
+        }
     }
 
     /**
      * @param \Swoole\Server $serv
      * @param \Swoole\Server\Task $task
-     * @return mixed
      */
     public function onTaskCo(\Swoole\Server $serv, \Swoole\Server\Task $task)
     {
-        return $this->taskHandle->handle($task->id, $task->worker_id, $task->data);
+        try {
+            $result = $this->taskHandle->handle($task->id, $task->worker_id, $task->data);
+            $task->finish($result === null ? '' : $result);
+        } catch (\Throwable $throwable) {
+            $task->finish($throwable);
+        }
     }
 
     /**
@@ -388,6 +397,7 @@ abstract class Server
      */
     public function onFinish(\Swoole\Server $serv, int $task_id, string $data): void
     {
+
     }
 
     /**
