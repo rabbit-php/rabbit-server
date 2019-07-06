@@ -14,6 +14,7 @@ use rabbit\contract\TaskInterface;
 use rabbit\core\ObjectFactory;
 use rabbit\helper\ArrayHelper;
 use rabbit\helper\ExceptionHelper;
+use rabbit\helper\VarDumper;
 
 /**
  * Class Server
@@ -373,7 +374,8 @@ abstract class Server
             $result = $this->taskHandle->handle($task_id, $from_id, $data);
             return $result === null ? '' : $result;
         } catch (\Throwable $throwable) {
-            App::error(ExceptionHelper::convertExceptionToArray($throwable), 'Task');
+            App::error(VarDumper::getDumper()->dumpAsString(ExceptionHelper::convertExceptionToArray($throwable)),
+                'Task');
             return new TaskException($throwable->getMessage());
         }
     }
@@ -388,7 +390,8 @@ abstract class Server
             $result = $this->taskHandle->handle($task->id, $task->worker_id, $task->data);
             $task->finish($result === null ? '' : $result);
         } catch (\Throwable $throwable) {
-            App::error(ExceptionHelper::convertExceptionToArray($throwable), 'Task');
+            App::error(VarDumper::getDumper()->dumpAsString(ExceptionHelper::convertExceptionToArray($throwable)),
+                'Task');
             $task->finish(new TaskException($throwable->getMessage()));
         }
     }
