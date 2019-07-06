@@ -13,6 +13,7 @@ use rabbit\contract\DispatcherInterface;
 use rabbit\contract\TaskInterface;
 use rabbit\core\ObjectFactory;
 use rabbit\helper\ArrayHelper;
+use rabbit\helper\ExceptionHelper;
 
 /**
  * Class Server
@@ -372,7 +373,8 @@ abstract class Server
             $result = $this->taskHandle->handle($task_id, $from_id, $data);
             return $result === null ? '' : $result;
         } catch (\Throwable $throwable) {
-            return $throwable;
+            App::error(ExceptionHelper::convertExceptionToArray($throwable), 'Task');
+            return new TaskException($throwable->getMessage());
         }
     }
 
@@ -386,7 +388,8 @@ abstract class Server
             $result = $this->taskHandle->handle($task->id, $task->worker_id, $task->data);
             $task->finish($result === null ? '' : $result);
         } catch (\Throwable $throwable) {
-            $task->finish($throwable);
+            App::error(ExceptionHelper::convertExceptionToArray($throwable), 'Task');
+            $task->finish(new TaskException($throwable->getMessage()));
         }
     }
 
