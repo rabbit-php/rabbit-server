@@ -9,6 +9,7 @@
 namespace rabbit\server;
 
 use rabbit\App;
+use rabbit\contract\AbstractTask;
 use rabbit\contract\DispatcherInterface;
 use rabbit\contract\TaskInterface;
 use rabbit\core\ObjectFactory;
@@ -69,7 +70,7 @@ abstract class Server
 
     /** @var array */
     protected $setting = [];
-    /** @var TaskInterface */
+    /** @var AbstractTask */
     protected $taskHandle;
 
     /**
@@ -136,9 +137,8 @@ abstract class Server
         $server->on('workerStart', [$this, 'onWorkerStart']);
         $server->on('workerStop', [$this, 'onWorkerStop']);
         $server->on('workerError', [$this, 'onWorkerError']);
-        $server->on('finish', [$this, 'onFinish']);
-
         $server->on('pipeMessage', [$this, 'onPipeMessage']);
+
         if ($this->taskHandle !== null && !isset($this->setting['task_worker_num'])) {
             $this->setting['task_worker_num'] = swoole_cpu_num();
         }
@@ -147,6 +147,7 @@ abstract class Server
                 $server->on('task', [$this, 'onTaskCo']);
             } else {
                 $server->on('task', [$this, 'onTask']);
+                $server->on('finish', [$this, 'onFinish']);
             }
         }
         $server->set($this->setting);
@@ -403,7 +404,7 @@ abstract class Server
      */
     public function onFinish(\Swoole\Server $serv, int $task_id, string $data): void
     {
-
+        $this->taskHandle->finish($serv, $task_id, $data);
     }
 
     /**
