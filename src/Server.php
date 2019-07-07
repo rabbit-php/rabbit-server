@@ -377,7 +377,7 @@ abstract class Server
         } catch (\Throwable $throwable) {
             App::error(VarDumper::getDumper()->dumpAsString(ExceptionHelper::convertExceptionToArray($throwable)),
                 'Task');
-            return new TaskException($throwable->getMessage());
+            return $throwable->getMessage();
         }
     }
 
@@ -393,7 +393,7 @@ abstract class Server
         } catch (\Throwable $throwable) {
             App::error(VarDumper::getDumper()->dumpAsString(ExceptionHelper::convertExceptionToArray($throwable)),
                 'Task');
-            $task->finish(new TaskException($throwable->getMessage()));
+            $task->finish($throwable->getMessage());
         }
     }
 
