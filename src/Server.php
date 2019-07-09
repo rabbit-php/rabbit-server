@@ -78,10 +78,10 @@ abstract class Server
      * @param array $setting
      * @throws \Exception
      */
-    public function __construct(array $setting = [])
+    public function __construct(array $setting = [], array $coSetting = [])
     {
-        $this->setting = ArrayHelper::merge(ObjectFactory::get('server.setting', false, []), $setting);
-        $this->name = ObjectFactory::get("appName", false, $this->name);
+        $this->setting = $setting;
+        \Co::set($coSetting);
     }
 
     /**
