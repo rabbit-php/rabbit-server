@@ -79,8 +79,7 @@ abstract class Server
      */
     public function __construct(array $setting = [], array $coSetting = [])
     {
-        $this->setting = array_merge(ObjectFactory::get('server.setting', false, []), $setting);
-        $this->name = ObjectFactory::get("appName", false, $this->name);
+        $this->setting = $setting;
         \Co::set($coSetting);
     }
 
