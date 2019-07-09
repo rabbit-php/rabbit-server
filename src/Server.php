@@ -13,7 +13,6 @@ use rabbit\contract\AbstractTask;
 use rabbit\contract\DispatcherInterface;
 use rabbit\contract\TaskInterface;
 use rabbit\core\ObjectFactory;
-use rabbit\helper\ArrayHelper;
 use rabbit\helper\ExceptionHelper;
 use rabbit\helper\VarDumper;
 
@@ -80,7 +79,8 @@ abstract class Server
      */
     public function __construct(array $setting = [], array $coSetting = [])
     {
-        $this->setting = $setting;
+        $this->setting = array_merge(ObjectFactory::get('server.setting', false, []), $setting);
+        $this->name = ObjectFactory::get("appName", false, $this->name);
         \Co::set($coSetting);
     }
 
