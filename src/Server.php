@@ -9,12 +9,11 @@
 namespace rabbit\server;
 
 use rabbit\App;
-use rabbit\contract\AbstractTask;
 use rabbit\contract\DispatcherInterface;
-use rabbit\contract\TaskInterface;
 use rabbit\core\ObjectFactory;
 use rabbit\helper\ExceptionHelper;
 use rabbit\helper\VarDumper;
+use rabbit\server\Task\AbstractTask;
 
 /**
  * Class Server
