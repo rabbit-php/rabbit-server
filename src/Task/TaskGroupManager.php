@@ -5,6 +5,7 @@ namespace rabbit\server\Task;
 
 
 use rabbit\App;
+use rabbit\helper\VarDumper;
 
 /**
  * Class TaskGroupManager
@@ -36,8 +37,6 @@ class TaskGroupManager
      */
     public function startGroup(float $timeout = 0.5): void
     {
-        $success = 0;
-        $failed = [];
         foreach ($this->taskList as $items) {
             $taskGroup = new TaskGroup();
             foreach ($items as $task) {
@@ -49,24 +48,12 @@ class TaskGroupManager
                 App::getServer()->task(...$task);
                 $taskGroup->add();
             }
-            App::info("Task {$taskGroup->getName()} start file count=" . $taskGroup->getCount(), $this->logKey);
+            App::info("Task {$taskGroup->getName()} start count=" . $taskGroup->getCount(), $this->logKey);
             $result = $taskGroup->wait($timeout);
-            $tmpSuccess = 0;
-            $tmpFaild = [];
-            foreach ($result as $res) {
-                $tmpSuccess += $res['success'];
-                $tmpFaild = array_merge($tmpFaild, $res['failed']);
-            }
-            $tmpFaildCount = count($tmpFaild);
-            $success += $tmpSuccess;
-            $failed = array_merge($failed, $tmpFaild);
-            $tmpFaild = implode(' & ', $tmpFaild);
-            App::info("Task finish {$taskGroup->getName()} success=$tmpSuccess failed=$tmpFaildCount files=$tmpFaild",
+            App::info("Task finish {$taskGroup->getName()}" . VarDumper::getDumper()->dumpAsString($result),
                 $this->logKey);
         }
-        $failedCount = count($failed);
-        $failed = implode(' & ', $failed);
-        App::info("All Task finish {$this->taskName} success=$success failed=$failedCount files=$failed",
+        App::info("{$this->taskName} All Task finish",
             $this->logKey);
     }
 
