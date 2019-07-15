@@ -221,8 +221,8 @@ abstract class Server
     public function onStart(\Swoole\Server $server): void
     {
         $this->setProcessTitle($this->name . ': master');
-        if ($server->setting['pid_file']) {
-            file_put_contents($server->setting['pid_file'], $server->master_pid);
+        if (isset($server->setting['pid_file'])) {
+            @file_put_contents($server->setting['pid_file'], $server->master_pid);
         }
     }
 
