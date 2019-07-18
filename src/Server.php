@@ -231,7 +231,7 @@ abstract class Server
      */
     public function onShutdown(\Swoole\Server $server): void
     {
-        if ($server->setting['pid_file']) {
+        if (isset($server->setting['pid_file']) && $server->setting['pid_file']) {
             unlink($server->setting['pid_file']);
         }
     }
