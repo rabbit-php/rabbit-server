@@ -13,6 +13,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use rabbit\core\Context;
 use rabbit\core\ObjectFactory;
 
 /**
@@ -25,11 +26,6 @@ class RequestHandler implements RequestHandlerInterface
      * @var array
      */
     private $middlewares;
-
-    /**
-     * @var MiddlewareInterface
-     */
-    private $default;
     /**
      * @var int
      */
@@ -42,8 +38,8 @@ class RequestHandler implements RequestHandlerInterface
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        if (($this->default instanceof MiddlewareInterface) && empty($this->middlewares[$this->offset])) {
-            $handler = $this->default;
+        if (empty($this->middlewares[$this->offset])) {
+            return Context::get('response');
         } else {
             $handler = $this->middlewares[$this->offset];
         }
