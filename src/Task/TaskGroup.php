@@ -81,11 +81,14 @@ class TaskGroup
      */
     public function wait(float $timeout = 0): array
     {
-        $res = [];
-        for ($i = 0; $i < $this->count; $i++) {
-            $res[] = $this->channel->pop($timeout);
+        try {
+            $res = [];
+            for ($i = 0; $i < $this->count; $i++) {
+                $res[] = $this->channel->pop($timeout);
+            }
+            return $res;
+        } finally {
+            $this->count = 0;
         }
-        $this->count = 0;
-        return $res;
     }
 }
