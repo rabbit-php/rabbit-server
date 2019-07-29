@@ -189,7 +189,7 @@ abstract class Server
      */
     public function workerStart(\Swoole\Server $server, int $worker_id): void
     {
-//        ObjectFactory::reload();
+        ObjectFactory::workerInit();
         if (extension_loaded('Zend OPcache')) {
             opcache_reset();
         }
