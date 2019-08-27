@@ -55,7 +55,8 @@ class Task
      */
     public function task($data, int $dst_worker_id = -1, \Closure $function = null)
     {
-        return $function ? App::getServer()->getSwooleServer()->task($data, $dst_worker_id, $function) : App::getServer()->task($data,
+        return $function ? App::getServer()->getSwooleServer()->task($data, $dst_worker_id,
+            $function) : App::getServer()->getSwooleServer()->task($data,
             $dst_worker_id);
     }
 
