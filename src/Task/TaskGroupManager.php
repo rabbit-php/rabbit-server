@@ -45,7 +45,7 @@ class TaskGroupManager
                         $taskGroup->push($data);
                     }
                 ]);
-                App::getServer()->task(...$task);
+                App::getServer()->getSwooleServer()->task(...$task);
                 $taskGroup->add();
             }
             App::info("Task {$taskGroup->getName()} start count=" . $taskGroup->getCount(), $this->logKey);

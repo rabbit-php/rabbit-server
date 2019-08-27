@@ -22,7 +22,7 @@ class WorkerMessage
      */
     public function send(array $msg, int $workerId = -1)
     {
-        $server = App::getServer();
+        $server = App::getServer()->getSwooleServer();
         if ($workerId === -1) {
             for ($i = 0; $i < $server->setting['worker_num']; $i++) {
                 $i !== $server->worker_id && $server->sendMessage($msg, $i);

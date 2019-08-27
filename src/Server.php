@@ -70,6 +70,8 @@ abstract class Server
     protected $setting = [];
     /** @var AbstractTask */
     protected $taskHandle;
+    /** @var \Swoole\Server */
+    protected $swooleServer;
 
     /**
      * Server constructor.
@@ -80,6 +82,14 @@ abstract class Server
     {
         $this->setting = $setting;
         \Co::set($coSetting);
+    }
+
+    /**
+     * @return \Swoole\Server
+     */
+    public function getSwooleServer(): \Swoole\Server
+    {
+        return $this->swooleServer;
     }
 
     /**
@@ -111,7 +121,7 @@ abstract class Server
      */
     public function start(): void
     {
-        $this->startServer($this->createServer());
+        $this->startServer($this->swooleServer = $this->createServer());
     }
 
     /**
@@ -126,7 +136,7 @@ abstract class Server
      */
     protected function startServer(\Swoole\Server $server = null): void
     {
-        App::setServer($server);
+        App::setServer($this);
         $server->on('start', [$this, 'onStart']);
         $server->on('shutdown', [$this, 'onShutdown']);
 
@@ -209,8 +219,8 @@ abstract class Server
      */
     public function stop(): void
     {
-        if (App::getServer()->setting['pid_file']) {
-            $pid = file_get_contents(App::getServer()->setting['pid_file']);
+        if ($this->swooleServer->setting['pid_file']) {
+            $pid = file_get_contents($this->swooleServer->setting['pid_file']);
             \Swoole\Process::kill(intval($pid));
         }
     }

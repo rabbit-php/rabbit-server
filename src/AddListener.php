@@ -28,9 +28,9 @@ class AddListener implements BootInterface
             list($server, $type, $method, $schme) = $data;
             $config = ObjectFactory::get($schme);
             if ($type) {
-                $port = App::getServer()->listen($server->getHost(), $server->getPort(), $type);
+                $port = App::getServer()->getSwooleServer()->listen($server->getHost(), $server->getPort(), $type);
             } else {
-                $port = App::getServer()->listen($server->getHost(), $server->getPort());
+                $port = App::getServer()->getSwooleServer()->listen($server->getHost(), $server->getPort());
             }
             foreach ($method as $bind => $callBack) {
                 $port->on($bind, [$server, $callBack]);

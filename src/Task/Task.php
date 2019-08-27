@@ -35,7 +35,7 @@ class Task
     public function start(float $timeout = 0.5): array
     {
         App::info('Task' . " $this->taskName " . 'start count=' . count($this->taskList), $this->logKey);
-        $result = App::getServer()->taskCo($this->taskList, $timeout);
+        $result = App::getServer()->getSwooleServer()->taskCo($this->taskList, $timeout);
         App::info('Task' . " $this->taskName " . 'finish!', $this->logKey);
         return is_array($result) ? $result : [$result];
     }
@@ -55,7 +55,7 @@ class Task
      */
     public function task($data, int $dst_worker_id = -1, \Closure $function = null)
     {
-        return $function ? App::getServer()->task($data, $dst_worker_id, $function) : App::getServer()->task($data,
+        return $function ? App::getServer()->getSwooleServer()->task($data, $dst_worker_id, $function) : App::getServer()->task($data,
             $dst_worker_id);
     }
 
@@ -66,6 +66,6 @@ class Task
      */
     public function taskwait($data, float $timeout = 0.5, int $dstWorkerId = -1)
     {
-        return App::getServer()->taskwait($data, $timeout, $dstWorkerId);
+        return App::getServer()->getSwooleServer()->taskwait($data, $timeout, $dstWorkerId);
     }
 }
