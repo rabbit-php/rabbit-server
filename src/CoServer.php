@@ -59,8 +59,7 @@ abstract class CoServer
     protected $setting = [];
 
     protected $swooleServer;
-    /** @var Pool */
-    protected $pool;
+
     /** @var ProcessSocketInterface */
     protected $socketHandle;
     /** @var int */
@@ -109,15 +108,6 @@ abstract class CoServer
     }
 
     /**
-     * @return Process
-     */
-    public function getProcess(?int $workerId = null): Process
-    {
-        $workerId = $workerId ?? $this->workerId;
-        return $this->pool instanceof Pool ? $this->pool->getProcess($workerId) : $this->pool[$workerId];
-    }
-
-    /**
      *
      */
     public function start(): void
@@ -131,24 +121,41 @@ abstract class CoServer
 
     protected function startWithPool(): void
     {
-        $this->pool = new Pool($this->setting['worker_num'], SWOOLE_IPC_UNIXSOCK, 0, true);
+        $totalNum = $this->setting['worker_num'] + (isset($this->setting['task_worker_num']) ? $this->setting['task_worker_num'] : 0);
+        $this->pool = new Pool($totalNum, SWOOLE_IPC_UNIXSOCK, 0, true);
         $this->pool->on('workerStart', function (Pool $pool, int $workerId) {
             $this->workerId = $workerId;
-            if ($this->socketHandle) {
-                rgo(function () use ($pool) {
-                    $socket = $pool->getProcess()->exportSocket();
-                    while (true) {
-                        $data = $socket->recv();
-                        !empty($data) && $this->socketHandle->handle($this, $data);
-                    }
-                });
+            $process = $pool->getProcess();
+            if ($workerId < $this->setting['worker_num']) {
+                $this->onWorkerStart($workerId);
+                if ($this->socketHandle) {
+                    rgo(function () use ($process) {
+                        $this->socketIPC($process);
+                    });
+                }
+                App::setServer($this);
+                $this->startServer($this->swooleServer = $this->createServer());
+            } else {
+                $this->onWorkerStart($workerId, true);
+                $this->socketIPC($process);
             }
-            App::setServer($this);
-            $this->onWorkerStart($workerId);
-            $this->startServer($this->swooleServer = $this->createServer());
+        });
+        $this->pool->on('workerStop', function (Pool $pool, int $workerId) {
             $this->onWorkerExit($workerId);
         });
         $this->pool->start();
+    }
+
+    /**
+     * @param Process $process
+     */
+    protected function socketIPC(Process $process)
+    {
+        $socket = $process->exportSocket();
+        while (true) {
+            $data = $socket->recv();
+            $data !== false && $socket->send($this->socketHandle->handle($this, $data));
+        }
     }
 
     protected function startWithProcess(): void
@@ -187,7 +194,7 @@ abstract class CoServer
      * @throws \DI\DependencyException
      * @throws \DI\NotFoundException
      */
-    protected function onWorkerStart(int $workerId): void
+    protected function onWorkerStart(int $workerId, bool $isTask = false): void
     {
         ObjectFactory::workerInit();
         if (extension_loaded('Zend OPcache')) {
@@ -202,7 +209,11 @@ abstract class CoServer
             }
             $handle->handle($workerId);
         }
-        $this->setProcessTitle($this->name . ': worker' . ": {$workerId}");
+        if ($isTask) {
+            $this->setProcessTitle($this->name . ': task' . ": {$workerId}");
+        } else {
+            $this->setProcessTitle($this->name . ': worker' . ": {$workerId}");
+        }
     }
 
     /**

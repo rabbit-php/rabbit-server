@@ -10,9 +10,16 @@ namespace rabbit\server;
 interface ProcessSocketInterface
 {
     /**
+     * @param $data
+     * @param int|null $workerId
+     * @return mixed
+     */
+    public function send($data, int $workerId = null);
+
+    /**
      * @param array $responses
      * @param string $data
      * @return mixed
      */
-    public function handle($server, string $data);
+    public function handle(string $data): string;
 }
