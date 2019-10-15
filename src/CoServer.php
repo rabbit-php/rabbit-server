@@ -112,6 +112,7 @@ abstract class CoServer
      */
     public function start(): void
     {
+        $this->setProcessTitle($this->name . ": master");
         if ($this->usePool) {
             $this->startWithPool();
         } else {
