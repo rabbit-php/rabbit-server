@@ -60,9 +60,9 @@ class Task
             $dst_worker_id,
             $function
         ) : App::getServer()->getSwooleServer()->task(
-                $data,
-                $dst_worker_id
-            );
+            $data,
+            $dst_worker_id
+        );
     }
 
     /**
