@@ -37,6 +37,5 @@ abstract class AbstractTask
      */
     public function finish(\Swoole\Server $serv, int $task_id, string $data)
     {
-
     }
 }

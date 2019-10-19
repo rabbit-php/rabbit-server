@@ -8,7 +8,6 @@
 
 namespace rabbit\server;
 
-
 abstract class AbstractUdpServer extends Server
 {
     /**

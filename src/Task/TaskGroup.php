@@ -3,7 +3,6 @@
 
 namespace rabbit\server\Task;
 
-
 use Swoole\Coroutine\Channel;
 
 /**

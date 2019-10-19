@@ -8,7 +8,6 @@
 
 namespace rabbit\server;
 
-
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
 use rabbit\web\MessageTrait;

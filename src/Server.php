@@ -299,7 +299,6 @@ abstract class Server
      */
     public function onConnect(\Swoole\Server $server, int $fd, int $from_id): void
     {
-
     }
 
     /**
@@ -312,7 +311,6 @@ abstract class Server
      */
     public function onReceive(\Swoole\Server $server, int $fd, int $reactor_id, string $data): void
     {
-
     }
 
     /**
@@ -323,7 +321,6 @@ abstract class Server
      */
     public function onRequest(\Swoole\Http\Request $request, \Swoole\Http\Response $response): void
     {
-
     }
 
     /**
@@ -332,7 +329,6 @@ abstract class Server
      */
     public function onMessage(\Swoole\WebSocket\Server $server, \Swoole\WebSocket\Frame $frame): void
     {
-
     }
 
     /**
@@ -341,12 +337,10 @@ abstract class Server
      */
     public function onOpen(\Swoole\WebSocket\Server $server, \Swoole\Http\Request $request): void
     {
-
     }
 
     public function onHandShake(\Swoole\Http\Request $request, \Swoole\Http\Response $response): bool
     {
-
     }
 
     /**
@@ -367,7 +361,6 @@ abstract class Server
      */
     public function onClose(\Swoole\Server $server, int $fd, int $from_id): void
     {
-
     }
 
     /**
@@ -383,8 +376,10 @@ abstract class Server
             $result = $this->taskHandle->handle($task_id, $from_id, $data);
             return $result === null ? '' : $result;
         } catch (\Throwable $throwable) {
-            App::error(VarDumper::getDumper()->dumpAsString(ExceptionHelper::convertExceptionToArray($throwable)),
-                'Task');
+            App::error(
+                VarDumper::getDumper()->dumpAsString(ExceptionHelper::convertExceptionToArray($throwable)),
+                'Task'
+            );
             return $throwable->getMessage();
         }
     }
@@ -399,8 +394,10 @@ abstract class Server
             $result = $this->taskHandle->handle($task->id, $task->worker_id, $task->data);
             $task->finish($result === null ? '' : $result);
         } catch (\Throwable $throwable) {
-            App::error(VarDumper::getDumper()->dumpAsString(ExceptionHelper::convertExceptionToArray($throwable)),
-                'Task');
+            App::error(
+                VarDumper::getDumper()->dumpAsString(ExceptionHelper::convertExceptionToArray($throwable)),
+                'Task'
+            );
             $task->finish($throwable->getMessage());
         }
     }
@@ -433,7 +430,6 @@ abstract class Server
      */
     public function onWorkerError(\Swoole\Server $serv, int $worker_id, int $worker_pid, int $exit_code): void
     {
-
     }
 
     /**
@@ -449,6 +445,5 @@ abstract class Server
      */
     public function onManagerStop(\Swoole\Server $serv): void
     {
-
     }
 }

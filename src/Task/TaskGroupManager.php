@@ -3,7 +3,6 @@
 
 namespace rabbit\server\Task;
 
-
 use rabbit\App;
 use rabbit\helper\VarDumper;
 
@@ -50,11 +49,15 @@ class TaskGroupManager
             }
             App::info("Task {$taskGroup->getName()} start count=" . $taskGroup->getCount(), $this->logKey);
             $result = $taskGroup->wait($timeout);
-            App::info("Task finish {$taskGroup->getName()}" . VarDumper::getDumper()->dumpAsString($result),
-                $this->logKey);
+            App::info(
+                "Task finish {$taskGroup->getName()}" . VarDumper::getDumper()->dumpAsString($result),
+                $this->logKey
+            );
         }
-        App::info("{$this->taskName} All Task finish",
-            $this->logKey);
+        App::info(
+            "{$this->taskName} All Task finish",
+            $this->logKey
+        );
     }
 
     /**

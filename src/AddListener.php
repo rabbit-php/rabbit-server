@@ -8,7 +8,6 @@
 
 namespace rabbit\server;
 
-
 use rabbit\App;
 use rabbit\core\ObjectFactory;
 

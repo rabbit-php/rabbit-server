@@ -3,7 +3,6 @@
 
 namespace rabbit\server;
 
-
 use rabbit\App;
 use rabbit\core\ObjectFactory;
 use Swoole\Process;
@@ -60,12 +59,8 @@ abstract class CoServer
 
     protected $swooleServer;
 
-    /** @var ProcessSocketInterface */
+    /** @var AbstractProcessSocket */
     protected $socketHandle;
-    /** @var int */
-    public $workerId;
-    /** @var bool */
-    protected $usePool = true;
 
     /**
      * Server constructor.
@@ -113,38 +108,30 @@ abstract class CoServer
     public function start(): void
     {
         $this->setProcessTitle($this->name . ": master");
-        if ($this->usePool) {
-            $this->startWithPool();
-        } else {
-            $this->startWithProcess();
-        }
+        $this->startWithPool();
     }
 
     protected function startWithPool(): void
     {
-        $totalNum = $this->setting['worker_num'] + (isset($this->setting['task_worker_num']) ? $this->setting['task_worker_num'] : 0);
-        $this->pool = new Pool($totalNum, SWOOLE_IPC_UNIXSOCK, 0, true);
-        $this->pool->on('workerStart', function (Pool $pool, int $workerId) {
-            $this->workerId = $workerId;
+        $pool = new Pool($this->setting['worker_num'], SWOOLE_IPC_UNIXSOCK, 0, true);
+        $pool->on('workerStart', function (Pool $pool, int $workerId) {
+            $this->socketHandle->workerId = $workerId;
             $process = $pool->getProcess();
-            if ($workerId < $this->setting['worker_num']) {
-                $this->onWorkerStart($workerId);
-                if ($this->socketHandle) {
-                    rgo(function () use ($process) {
-                        $this->socketIPC($process);
-                    });
-                }
-                App::setServer($this);
-                $this->startServer($this->swooleServer = $this->createServer());
-            } else {
-                $this->onWorkerStart($workerId, true);
-                $this->socketIPC($process);
+            $this->onWorkerStart($workerId);
+            if ($this->socketHandle) {
+                rgo(function () use ($process) {
+                    $this->socketIPC($process);
+                });
             }
+            App::setServer($this);
+            $this->startServer($this->swooleServer = $this->createServer());
         });
-        $this->pool->on('workerStop', function (Pool $pool, int $workerId) {
+        $pool->on('workerStop', function (Pool $pool, int $workerId) {
             $this->onWorkerExit($workerId);
         });
-        $this->pool->start();
+        $this->socketHandle->setWorkerIds($this->setting['worker_num']);
+        $this->socketHandle->setPool($pool);
+        $pool->start();
     }
 
     /**
@@ -155,38 +142,7 @@ abstract class CoServer
         $socket = $process->exportSocket();
         while (true) {
             $data = $socket->recv();
-            $data !== false && $socket->send($this->socketHandle->handle($this, $data));
-        }
-    }
-
-    protected function startWithProcess(): void
-    {
-        for ($workerId = 0; $workerId < $this->setting['worker_num']; $workerId++) {
-            $process = new Process(function (Process $proc) use ($workerId) {
-                $this->workerId = $workerId;
-                $this->onWorkerStart($workerId);
-                App::setServer($this);
-                if ($this->socketHandle) {
-                    rgo(function () use ($proc) {
-                        $socket = $proc->exportSocket();
-                        while (true) {
-                            $data = $socket->recv();
-                            !empty($data) && $this->socketHandle->handle($this, $data);
-                        }
-                    });
-                }
-                $this->startServer($this->swooleServer = $this->createServer());
-                $this->onWorkerExit($workerId);
-            }, false, 1, true);
-            $this->pool[$workerId] = $process;
-        }
-        Process::signal(SIGCHLD, function ($sig) {
-            //必须为false，非阻塞模式
-            while ($ret = Process::wait(false)) {
-            }
-        });
-        foreach ($this->pool as $process) {
-            $process->start();
+            $data !== false && $socket->send($this->socketHandle->handle($data));
         }
     }
 
@@ -236,9 +192,9 @@ abstract class CoServer
     }
 
     /**
-     * @return ProcessSocketInterface
+     * @return AbstractProcessSocket
      */
-    public function getProcessSocket(): ProcessSocketInterface
+    public function getProcessSocket(): AbstractProcessSocket
     {
         return $this->socketHandle;
     }

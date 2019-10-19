@@ -8,7 +8,6 @@
 
 namespace rabbit\server;
 
-
 use Psr\Http\Message\ResponseInterface;
 use rabbit\core\Context;
 use rabbit\handler\ErrorHandlerInterface;
@@ -50,5 +49,4 @@ class ErrorHandler implements ErrorHandlerInterface
 
         return $response;
     }
-
 }

@@ -27,5 +27,4 @@ class ClearTimer implements WorkerHandlerInterface
         $timer = ObjectFactory::get('timer', false);
         $timer && $timer->clearTimers();
     }
-
 }

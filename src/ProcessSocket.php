@@ -14,65 +14,25 @@ use Swoole\Process\Pool;
  * Class ProcessSocket
  * @package rabbit\httpserver\websocket
  */
-class ProcessSocket implements ProcessSocketInterface
+class ProcessSocket extends AbstractProcessSocket
 {
-    /** @var ParserInterface */
-    protected $parser;
-
-    protected $pool;
-
-    /**
-     * ProcessSocket constructor.
-     */
-    public function __construct()
-    {
-        $this->parser = new PhpParser();
-    }
-
-    /**
-     * @param $pool
-     */
-    public function setPool($pool): void
-    {
-        $this->pool = $pool;
-    }
-
-    /**
-     * @return Process
-     */
-    public function getProcess(?int $workerId = null): Process
-    {
-        $workerId = $workerId ?? $this->workerId;
-        return $this->pool instanceof Pool ? $this->pool->getProcess($workerId) : $this->pool[$workerId];
-    }
-
-    /**
-     * @param $data
-     * @param int|null $workerId
-     * @return mixed
-     */
-    public function send($data, int $workerId = null)
-    {
-        $socket = $this->getProcess($workerId)->exportSocket();
-        $socket->send($this->parser->encode($data));
-        return $this->parser->decode($socket->recv());
-    }
-
-
     /**
      * @param string $data
      * @return string
      * @throws \Exception
      */
-    public function handle(string $data): string
+    public function handle(string &$data): string
     {
         try {
             [$route, $params] = $this->parser->decode($data);
             if (is_string($route)) {
                 if (strpos($route, '::') !== false) {
                     $result = call_user_func_array($route, $params);
+                } elseif (strpos($route, '->')) {
+                    [$class, $method] = explode('->', $route);
+                    $result = getDI($class)->$method(...$params);
                 } elseif (class_exists($route)) {
-                    $result = getDI($route)($msg);
+                    $result = getDI($route)(...$params);
                 } else {
                     throw new InvalidArgumentException("The $route parame error");
                 }
