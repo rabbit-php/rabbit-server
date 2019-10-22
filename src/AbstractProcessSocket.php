@@ -4,9 +4,10 @@
 namespace rabbit\server;
 
 use rabbit\exception\InvalidArgumentException;
+use rabbit\helper\FileHelper;
 use rabbit\helper\WaitGroup;
+use rabbit\parser\MsgPackParser;
 use rabbit\parser\ParserInterface;
-use rabbit\parser\PhpParser;
 use Swoole\Process;
 use Swoole\Process\Pool;
 
@@ -24,13 +25,18 @@ abstract class AbstractProcessSocket
     public $workerId;
     /** @var array */
     protected $workerIds = [];
+    /** @var string */
+    protected $path = '/dev/shm/ProcessSocket';
+    /** @var bool */
+    protected $sendBigData = false;
 
     /**
      * ProcessSocket constructor.
      */
-    public function __construct()
+    public function __construct(ParserInterface $parser = null)
     {
-        $this->parser = new PhpParser();
+        $this->parser = $parser ?? new MsgPackParser();
+        FileHelper::createDirectory($this->path);
     }
 
     /**
@@ -38,9 +44,7 @@ abstract class AbstractProcessSocket
      */
     public function setWorkerIds(int $totalNum): void
     {
-        for ($i = 0; $i < $totalNum; $i++) {
-            $this->workerIds[] = $i;
-        }
+        $this->workerIds = range(0, $totalNum - 1);
     }
 
     /**
@@ -69,6 +73,18 @@ abstract class AbstractProcessSocket
     }
 
     /**
+     * @param Process $process
+     */
+    public function socketIPC(Process $process)
+    {
+        $socket = $process->exportSocket();
+        while (true) {
+            $data = $socket->recv();
+            $socket->send($this->handle($data));
+        }
+    }
+
+    /**
      * @param $data
      * @param int|null $workerId
      * @return mixed
@@ -83,8 +99,46 @@ abstract class AbstractProcessSocket
             throw new InvalidArgumentException("The workerId must be not eq current worker=$workerId");
         }
         $socket = $this->getProcess($workerId)->exportSocket();
-        $socket->send($this->parser->encode($data));
+        $data = $this->parser->encode($data);
+        if (strlen($data) >= 65536) {
+            if ($this->sendBigData) {
+                $fileName = uniqid();
+                $this->writeMemory($fileName, $data);
+                $data = $this->parser->encode(['readMemory', [$fileName]]);
+            } else {
+                return $this->parser->decode($this->handle($data));
+            }
+        }
+        while ($data) {
+            $len = $socket->sendAll($data);
+            if (strlen($data) === $len) {
+                break;
+            }
+            $data = substr($data, $len);
+        }
+
         return $this->parser->decode($socket->recv());
+    }
+
+    /**
+     * @param string $fileName
+     * @param string $data
+     * @return int
+     */
+    protected function writeMemory(string $fileName, string &$data): int
+    {
+        return file_put_contents($this->path . '/' . $fileName, $data);
+    }
+
+    /**
+     * @param string $fileName
+     * @return string
+     */
+    protected function readMemory(string $fileName): string
+    {
+        $data = file_get_contents($this->path . '/' . $fileName);
+        unlink($this->path . '/' . $fileName);
+        return $this->handle($data);
     }
 
     /**

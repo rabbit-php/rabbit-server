@@ -115,12 +115,13 @@ abstract class CoServer
     {
         $pool = new Pool($this->setting['worker_num'], SWOOLE_IPC_UNIXSOCK, 0, true);
         $pool->on('workerStart', function (Pool $pool, int $workerId) {
+            \Swoole\Runtime::enableCoroutine();
             $this->socketHandle->workerId = $workerId;
             $process = $pool->getProcess();
             $this->onWorkerStart($workerId);
             if ($this->socketHandle) {
                 rgo(function () use ($process) {
-                    $this->socketIPC($process);
+                    $this->socketHandle->socketIPC($process);
                 });
             }
             App::setServer($this);
@@ -132,18 +133,6 @@ abstract class CoServer
         $this->socketHandle->setWorkerIds($this->setting['worker_num']);
         $this->socketHandle->setPool($pool);
         $pool->start();
-    }
-
-    /**
-     * @param Process $process
-     */
-    protected function socketIPC(Process $process)
-    {
-        $socket = $process->exportSocket();
-        while (true) {
-            $data = $socket->recv();
-            $data !== false && $socket->send($this->socketHandle->handle($data));
-        }
     }
 
     /**

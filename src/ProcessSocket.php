@@ -5,10 +5,6 @@ namespace rabbit\server;
 
 use rabbit\App;
 use rabbit\exception\InvalidArgumentException;
-use rabbit\parser\ParserInterface;
-use rabbit\parser\PhpParser;
-use Swoole\Process;
-use Swoole\Process\Pool;
 
 /**
  * Class ProcessSocket
@@ -33,6 +29,8 @@ class ProcessSocket extends AbstractProcessSocket
                     $result = getDI($class)->$method(...$params);
                 } elseif (class_exists($route)) {
                     $result = getDI($route)(...$params);
+                } elseif (method_exists($this, $route)) {
+                    $result = $this->$route(...$params);
                 } else {
                     throw new InvalidArgumentException("The $route parame error");
                 }
