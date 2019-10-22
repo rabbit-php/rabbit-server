@@ -3,7 +3,6 @@
 
 namespace rabbit\server;
 
-use rabbit\App;
 use rabbit\helper\FileHelper;
 use rabbit\helper\WaitGroup;
 use rabbit\parser\MsgPackParser;
@@ -53,14 +52,6 @@ abstract class AbstractProcessSocket
     public function getWorkerIds(): array
     {
         return $this->workerIds;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getNeedSend(): bool
-    {
-        return $this->workerId === array_rand($this->workerIds);
     }
 
     /**
@@ -129,7 +120,7 @@ abstract class AbstractProcessSocket
                 return $this->parser->decode($this->handle($data));
             }
         }
-        App::info("Data from worker $this->workerId to $workerId");
+
         while ($data) {
             $len = $socket->sendAll($data);
             if (strlen($data) === $len) {
@@ -176,14 +167,14 @@ abstract class AbstractProcessSocket
         if ($return) {
             $group = new WaitGroup();
             foreach ($workerIds as $id) {
-                $group->add($id, function () use ($id) {
+                $group->add($id, function () use ($id, &$data) {
                     $resulst[$id] = $this->send($data, $id);
                 });
             }
             $group->wait();
         } else {
             foreach ($workerIds as $id) {
-                rgo(function () {
+                rgo(function () use ($id, &$data) {
                     $this->send($data, $id);
                 });
             }
