@@ -3,7 +3,7 @@
 
 namespace rabbit\server;
 
-use rabbit\exception\InvalidArgumentException;
+use rabbit\App;
 use rabbit\helper\FileHelper;
 use rabbit\helper\WaitGroup;
 use rabbit\parser\MsgPackParser;
@@ -45,6 +45,22 @@ abstract class AbstractProcessSocket
     public function setWorkerIds(int $totalNum): void
     {
         $this->workerIds = range(0, $totalNum - 1);
+    }
+
+    /**
+     * @return array
+     */
+    public function getWorkerIds(): array
+    {
+        return $this->workerIds;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getNeedSend(): bool
+    {
+        return $this->workerId === array_rand($this->workerIds);
     }
 
     /**
@@ -92,14 +108,14 @@ abstract class AbstractProcessSocket
     public function send(&$data, int $workerId = null)
     {
         if ($workerId === null) {
-            $workerIds = $this->workerIds;
-            unset($workerIds[$this->workerId]);
-            $workerId = array_rand($workerIds);
-        } elseif ($workerId === $this->workerId) {
-            throw new InvalidArgumentException("The workerId must be not eq current worker=$workerId");
+            $workerId = array_rand($this->workerIds);
+        }
+
+        $data = $this->parser->encode($data);
+        if ($workerId === $this->workerId) {
+            return $this->parser->decode($this->handle($data));
         }
         $socket = $this->getProcess($workerId)->exportSocket();
-        $data = $this->parser->encode($data);
         $len = strlen($data);
         if ($len >= 65536) {
             if ($this->sendBigData) {
@@ -113,6 +129,7 @@ abstract class AbstractProcessSocket
                 return $this->parser->decode($this->handle($data));
             }
         }
+        App::info("Data from worker $this->workerId to $workerId");
         while ($data) {
             $len = $socket->sendAll($data);
             if (strlen($data) === $len) {
