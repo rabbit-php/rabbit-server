@@ -28,6 +28,8 @@ abstract class AbstractProcessSocket
     protected $path = '/dev/shm/ProcessSocket';
     /** @var bool */
     protected $sendBigData = false;
+    /** @var bool */
+    protected $return = false;
 
     /**
      * ProcessSocket constructor.
@@ -87,7 +89,8 @@ abstract class AbstractProcessSocket
         $socket = $process->exportSocket();
         while (true) {
             $data = $socket->recv();
-            $socket->send($this->parser->encode($this->handle($this->parser->decode($data))));
+            $result = $this->handle($this->parser->decode($data));
+            $this->return && $socket->send($this->parser->encode($result));
         }
     }
 
@@ -129,7 +132,9 @@ abstract class AbstractProcessSocket
             $data = substr($data, $len);
         }
 
-        return $this->parser->decode($socket->recv());
+        if ($this->return) {
+            return $this->parser->decode($socket->recv());
+        }
     }
 
     /**
