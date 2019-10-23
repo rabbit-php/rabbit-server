@@ -417,9 +417,9 @@ abstract class Server
      * @param int $from_worker_id
      * @param $message
      */
-    public function onPipeMessage(\Swoole\Server $server, int $from_worker_id, mixed $message): void
+    public function onPipeMessage(\Swoole\Server $server, int $from_worker_id, $message): void
     {
-        call_user_func($message);
+        $this->taskHandle->handle($server->worker_id, $from_worker_id, $message);
     }
 
     /**

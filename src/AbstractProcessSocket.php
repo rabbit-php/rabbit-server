@@ -87,7 +87,7 @@ abstract class AbstractProcessSocket
         $socket = $process->exportSocket();
         while (true) {
             $data = $socket->recv();
-            $socket->send($this->handle($data));
+            $socket->send($this->parser->encode($this->handle($this->parser->decode($data))));
         }
     }
 
@@ -102,11 +102,11 @@ abstract class AbstractProcessSocket
             $workerId = array_rand($this->workerIds);
         }
 
-        $data = $this->parser->encode($data);
         if ($workerId === $this->workerId) {
-            return $this->parser->decode($this->handle($data));
+            return $this->handle($data);
         }
         $socket = $this->getProcess($workerId)->exportSocket();
+        $data = $this->parser->encode($data);
         $len = strlen($data);
         if ($len >= 65536) {
             if ($this->sendBigData) {
@@ -117,7 +117,7 @@ abstract class AbstractProcessSocket
                 }
                 $data = $this->parser->encode(['readMemory', [$fileName]]);
             } else {
-                return $this->parser->decode($this->handle($data));
+                return $this->handle($this->parser->decode($data));
             }
         }
 
@@ -150,7 +150,7 @@ abstract class AbstractProcessSocket
     {
         $data = file_get_contents($this->path . '/' . $fileName);
         unlink($this->path . '/' . $fileName);
-        return $this->handle($data);
+        return $this->handle($this->parser->decode($data));
     }
 
     /**
@@ -186,5 +186,5 @@ abstract class AbstractProcessSocket
      * @param string $data
      * @return mixed
      */
-    abstract public function handle(string &$data): string;
+    abstract public function handle(array &$data);
 }

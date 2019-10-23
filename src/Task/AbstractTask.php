@@ -27,7 +27,7 @@ abstract class AbstractTask
      * @param $data
      * @return mixed
      */
-    abstract public function handle(int $task_id, int $from_id, $data);
+    abstract public function handle(int $task_id, int $from_id, &$data);
 
     /**
      * @param \Swoole\Server $serv
