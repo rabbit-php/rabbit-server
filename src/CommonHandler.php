@@ -5,6 +5,7 @@ namespace rabbit\server;
 
 use rabbit\App;
 use rabbit\exception\InvalidArgumentException;
+use rabbit\helper\ExceptionHelper;
 
 /**
  * Class CommonHandler
@@ -20,6 +21,7 @@ class CommonHandler
      */
     public static function handler($ctl, array &$data)
     {
+        $result = null;
         try {
             [$route, &$params] = $data;
             if (is_string($route)) {
@@ -41,8 +43,7 @@ class CommonHandler
                 throw new InvalidArgumentException("The route params error");
             }
         } catch (\Throwable $exception) {
-            $result = $exception->getMessage();
-            App::error($result);
+            App::error(ExceptionHelper::dumpExceptionToString($exception));
         } finally {
             return $result;
         }
