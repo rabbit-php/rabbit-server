@@ -88,8 +88,8 @@ abstract class AbstractProcessSocket
     {
         $socket = $process->exportSocket();
         while (true) {
-            $data = $socket->recv();
-            $result = $this->handle($this->parser->decode($data));
+            $data = $this->parser->decode($socket->recv());
+            $result = $this->handle($data);
             $this->return && $socket->send($this->parser->encode($result));
         }
     }
