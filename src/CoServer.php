@@ -141,7 +141,6 @@ abstract class CoServer
      */
     protected function onWorkerStart(int $workerId, bool $isTask = false): void
     {
-        ObjectFactory::workerInit();
         if (extension_loaded('Zend OPcache')) {
             opcache_reset();
         }
