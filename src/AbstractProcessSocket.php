@@ -27,7 +27,7 @@ abstract class AbstractProcessSocket
     /** @var string */
     protected $path = '/dev/shm/ProcessSocket';
     /** @var bool */
-    protected $sendBigData = false;
+    protected $sendBigData = true;
     /** @var bool */
     protected $return = false;
 
@@ -120,7 +120,8 @@ abstract class AbstractProcessSocket
                 }
                 $data = $this->parser->encode(['readMemory', [$fileName]]);
             } else {
-                return $this->handle($this->parser->decode($data));
+                $data = $this->parser->decode($data);
+                return $this->handle($data);
             }
         }
 
@@ -142,7 +143,7 @@ abstract class AbstractProcessSocket
      * @param string $data
      * @return int
      */
-    protected function writeMemory(string $fileName, string &$data): int
+    public function writeMemory(string $fileName, string &$data): int
     {
         return file_put_contents($this->path . '/' . $fileName, $data);
     }
@@ -151,11 +152,12 @@ abstract class AbstractProcessSocket
      * @param string $fileName
      * @return string
      */
-    protected function readMemory(string $fileName): string
+    public function readMemory(string $fileName): ?string
     {
         $data = file_get_contents($this->path . '/' . $fileName);
         unlink($this->path . '/' . $fileName);
-        return $this->handle($this->parser->decode($data));
+        $data = $this->parser->decode($data);
+        return $this->handle($data);
     }
 
     /**
