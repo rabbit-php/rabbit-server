@@ -28,8 +28,6 @@ abstract class AbstractProcessSocket
     protected $path = '/dev/shm/ProcessSocket';
     /** @var bool */
     protected $sendBigData = true;
-    /** @var bool */
-    protected $return = false;
 
     /**
      * ProcessSocket constructor.
@@ -88,9 +86,9 @@ abstract class AbstractProcessSocket
     {
         $socket = $process->exportSocket();
         while (true) {
-            $data = $this->parser->decode($socket->recv());
+            [$data, $wait] = $this->parser->decode($socket->recv());
             $result = $this->handle($data);
-            $this->return && $socket->send($this->parser->encode($result));
+            $wait && $socket->send($this->parser->encode($result));
         }
     }
 
@@ -99,7 +97,7 @@ abstract class AbstractProcessSocket
      * @param int|null $workerId
      * @return mixed
      */
-    public function send(&$data, int $workerId = null)
+    public function send(&$data, int $workerId = null, bool $wait = false)
     {
         if ($workerId === null) {
             $workerId = array_rand($this->workerIds);
@@ -109,7 +107,7 @@ abstract class AbstractProcessSocket
             return $this->handle($data);
         }
         $socket = $this->getProcess($workerId)->exportSocket();
-        $data = $this->parser->encode($data);
+        $data = $this->parser->encode([$data, $wait]);
         $len = strlen($data);
         if ($len >= 65536) {
             if ($this->sendBigData) {
@@ -133,7 +131,7 @@ abstract class AbstractProcessSocket
             $data = substr($data, $len);
         }
 
-        if ($this->return) {
+        if ($wait) {
             return $this->parser->decode($socket->recv());
         }
     }
