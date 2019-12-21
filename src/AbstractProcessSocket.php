@@ -116,7 +116,7 @@ abstract class AbstractProcessSocket
                 if ($len !== $writeLen) {
                     throw new \RuntimeException("Write to memory $len but only $writeLen writed");
                 }
-                $data = $this->parser->encode(['readMemory', [$fileName]]);
+                $data = $this->parser->encode([['readMemory', [$fileName]], $wait]);
             } else {
                 $data = $this->parser->decode($data);
                 return $this->handle($data);
@@ -154,7 +154,7 @@ abstract class AbstractProcessSocket
     {
         $data = file_get_contents($this->path . '/' . $fileName);
         unlink($this->path . '/' . $fileName);
-        $data = $this->parser->decode($data);
+        [$data, $wait] = $this->parser->decode($data);
         return $this->handle($data);
     }
 
