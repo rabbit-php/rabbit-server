@@ -120,7 +120,7 @@ abstract class CoServer
             $this->socketHandle->workerId = $workerId;
             $process = $pool->getProcess();
             $this->onWorkerStart($workerId);
-            if ($this->socketHandle) {
+            if ($this->socketHandle instanceof AbstractProcessSocket) {
                 rgo(function () use ($process) {
                     $this->socketHandle->socketIPC($process);
                 });
@@ -131,8 +131,10 @@ abstract class CoServer
         $pool->on('workerStop', function (Pool $pool, int $workerId) {
             $this->onWorkerExit($workerId);
         });
-        $this->socketHandle->setWorkerIds($this->setting['worker_num']);
-        $this->socketHandle->setPool($pool);
+        if ($this->socketHandle instanceof AbstractProcessSocket) {
+            $this->socketHandle->setWorkerIds($this->setting['worker_num']);
+            $this->socketHandle->setPool($pool);
+        }
         $pool->start();
     }
 
