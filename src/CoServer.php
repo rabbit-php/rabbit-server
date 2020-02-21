@@ -135,6 +135,7 @@ abstract class CoServer
             $this->socketHandle->setWorkerIds($this->setting['worker_num']);
             $this->socketHandle->setPool($pool);
         }
+        $this->beforeStart();
         $pool->start();
     }
 
@@ -200,7 +201,6 @@ abstract class CoServer
     protected function startServer($server = null): void
     {
         $server->set($this->setting);
-        $this->beforeStart($server);
     }
 
     /**
@@ -216,11 +216,10 @@ abstract class CoServer
     }
 
     /**
-     * @param $server
      * @throws \DI\DependencyException
      * @throws \DI\NotFoundException
      */
-    protected function beforeStart($server): void
+    protected function beforeStart(): void
     {
         foreach ($this->beforeStart as $name => $handle) {
             if (!$handle instanceof BootInterface) {
