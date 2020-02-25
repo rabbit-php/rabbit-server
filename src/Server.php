@@ -69,7 +69,9 @@ abstract class Server
     /** @var array */
     protected $setting = [];
     /** @var AbstractTask */
-    protected $taskHandle;
+    public $taskHandle;
+    /** @var AbstractPipeMsg */
+    public $pipeHandler;
     /** @var \Swoole\Server */
     protected $swooleServer;
 
@@ -416,9 +418,9 @@ abstract class Server
      * @param int $from_worker_id
      * @param $message
      */
-    public function onPipeMessage(\Swoole\Server $server, int $from_worker_id, $message): void
+    public function onPipeMessage(\Swoole\Server $server, int $from_worker_id, string $message): void
     {
-        $this->taskHandle->handle($server->worker_id, $from_worker_id, $message);
+        $this->pipeHandler && $this->pipeHandler->handle($server, $from_worker_id, $message);
     }
 
     /**
