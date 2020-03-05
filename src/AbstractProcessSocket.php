@@ -3,6 +3,7 @@
 
 namespace rabbit\server;
 
+use Co\Channel;
 use rabbit\helper\FileHelper;
 use rabbit\helper\WaitGroup;
 use rabbit\parser\MsgPackParser;
@@ -28,6 +29,8 @@ abstract class AbstractProcessSocket
     protected $path = '/dev/shm/ProcessSocket';
     /** @var bool */
     protected $sendBigData = true;
+    /** @var Channel */
+    private $channel;
 
     /**
      * ProcessSocket constructor.
@@ -36,6 +39,7 @@ abstract class AbstractProcessSocket
     {
         $this->parser = $parser ?? new MsgPackParser();
         FileHelper::createDirectory($this->path);
+        $this->channel = new Channel(1);
     }
 
     /**
@@ -99,6 +103,7 @@ abstract class AbstractProcessSocket
      */
     public function send(&$data, int $workerId = null, bool $wait = false)
     {
+
         if ($workerId === null) {
             $workerId = array_rand($this->workerIds);
         }
@@ -122,13 +127,17 @@ abstract class AbstractProcessSocket
                 return $this->handle($data);
             }
         }
-
-        while ($data) {
-            $len = $socket->sendAll($data);
-            if (strlen($data) === $len) {
-                break;
+        $this->channel->push(1);
+        try {
+            while ($data) {
+                $len = $socket->sendAll($data);
+                if (strlen($data) === $len) {
+                    break;
+                }
+                $data = substr($data, $len);
             }
-            $data = substr($data, $len);
+        } finally {
+            $this->channel->pop();
         }
 
         if ($wait) {
