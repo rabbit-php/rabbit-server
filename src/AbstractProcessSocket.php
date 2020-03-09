@@ -114,19 +114,13 @@ abstract class AbstractProcessSocket
         $socket = $this->getProcess($workerId)->exportSocket();
         $data = $this->parser->encode([$data, $wait]);
         $len = strlen($data);
-        if ($len >= 65536) {
-            if ($this->sendBigData) {
-                $fileName = uniqid();
-                $writeLen = $this->writeMemory($fileName, $data);
-                if ($len !== $writeLen) {
-                    throw new \RuntimeException("Write to memory $len but only $writeLen writed");
-                }
-                $data = $this->parser->encode([['readMemory', [$fileName]], $wait]);
-            } else {
-                $data = $this->parser->decode($data);
-                return $this->handle($data);
-            }
+        $fileName = uniqid();
+        $writeLen = $this->writeMemory($fileName, $data);
+        if ($len !== $writeLen) {
+            unlink($this->path . '/' . $fileName);
+            throw new \RuntimeException("Write to memory $len but only $writeLen writed");
         }
+        $data = $this->parser->encode([['readMemory', [$fileName]], $wait]);
         $this->channel->push(1);
         try {
             while ($data) {
@@ -136,6 +130,10 @@ abstract class AbstractProcessSocket
                 }
                 $data = substr($data, $len);
             }
+        } catch (\Throwable $exception) {
+            $len = strlen($data);
+            unlink($this->path . '/' . $fileName);
+            throw new \RuntimeException("$len bytes send failed!");
         } finally {
             $this->channel->pop();
         }
