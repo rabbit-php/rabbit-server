@@ -5,7 +5,8 @@ namespace rabbit\server;
 
 use rabbit\App;
 use rabbit\core\ObjectFactory;
-use Swoole\Process;
+use rabbit\process\Process;
+use rabbit\process\ProcessInterface;
 use Swoole\Process\Pool;
 use Swoole\Runtime;
 
@@ -54,7 +55,8 @@ abstract class CoServer
      * @var array
      */
     protected $workerStart = [];
-
+    /** @var array */
+    protected $processes = [];
     /** @var array */
     protected $setting = [];
 
@@ -114,19 +116,29 @@ abstract class CoServer
 
     protected function startWithPool(): void
     {
-        $pool = new Pool($this->setting['worker_num'], SWOOLE_IPC_UNIXSOCK, 0, true);
+        $pool = new Pool($this->setting['worker_num'] + count($this->processes), SWOOLE_IPC_UNIXSOCK, 0, true);
         $pool->on('workerStart', function (Pool $pool, int $workerId) {
             Runtime::enableCoroutine();
             $process = $pool->getProcess();
-            $this->onWorkerStart($workerId);
             if ($this->socketHandle instanceof AbstractProcessSocket) {
                 $this->socketHandle->workerId = $workerId;
                 rgo(function () use ($process) {
                     $this->socketHandle->socketIPC($process);
                 });
             }
-            App::setServer($this);
-            $this->startServer($this->swooleServer = $this->createServer());
+            if ($workerId < $this->setting['worker_num']) {
+                App::setServer($this);
+                $this->onWorkerStart($workerId);
+                $this->startServer($this->swooleServer = $this->createServer());
+            } else {
+                $keys = array_keys($this->processes);
+                $pro = $this->processes[$keys[$workerId - $this->setting['worker_num']]];
+                if ($pro instanceof ProcessInterface) {
+                    $child = new Process($process);
+                    $child->name($keys[$workerId - $this->setting['worker_num']]);
+                    $pro->run($child);
+                }
+            }
         });
         $pool->on('workerStop', function (Pool $pool, int $workerId) {
             $this->onWorkerExit($workerId);
