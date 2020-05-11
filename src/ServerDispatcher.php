@@ -49,7 +49,7 @@ class ServerDispatcher implements DispatcherInterface
             $errorHandler = ObjectFactory::get('errorHandler');
             $response = $errorHandler->handle($throw);
         }
-        $this->afterDispatch($response);
+        $this->afterDispatch($request, $response);
         return $response;
     }
 
@@ -66,7 +66,7 @@ class ServerDispatcher implements DispatcherInterface
     /**
      * @param ResponseInterface $response
      */
-    protected function afterDispatch(ResponseInterface $response): void
+    protected function afterDispatch(RequestInterface $request, ResponseInterface $response): void
     {
         $response->send();
     }
