@@ -44,7 +44,7 @@ abstract class Server
     /**
      * @var int
      */
-    protected $type = SWOOLE_PROCESS;
+    protected $type = SWOOLE_BASE;
 
     /**
      * @var DispatcherInterface
