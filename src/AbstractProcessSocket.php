@@ -4,6 +4,7 @@
 namespace rabbit\server;
 
 use Co\Channel;
+use Co\Socket;
 use rabbit\helper\FileHelper;
 use rabbit\helper\WaitGroup;
 use rabbit\parser\MsgPackParser;
@@ -90,9 +91,38 @@ abstract class AbstractProcessSocket
     {
         $socket = $process->exportSocket();
         while (true) {
-            [$data, $wait] = $this->parser->decode($socket->recv());
-            $result = $this->handle($data);
-            $wait && $socket->send($this->parser->encode($result));
+            [$data, $wait] = $this->parser->decode($this->dealRecv($socket));
+            $result = $this->parser->encode($this->handle($data));
+            $wait && $this->dealSend($socket, $result);
+        }
+    }
+
+    /**
+     * @param Socket $socket
+     * @return string
+     */
+    private function dealRecv(Socket $socket): string
+    {
+        $data = $socket->recv();
+        $len = current(unpack('N', substr($data, 0, 4))) + 4;
+        while (true) {
+            $data .= $socket->recv();
+            if (strlen($data) === $len) {
+                break;
+            }
+        }
+        return substr($data, 4);
+    }
+
+    /**
+     * @param string $data
+     */
+    private function dealSend(Socket $socket, string &$data): void
+    {
+        while ($data) {
+            $tmp = substr($data, 0, 65535);
+            $len = $socket->send($tmp);
+            $data = substr($data, $len);
         }
     }
 
@@ -113,56 +143,21 @@ abstract class AbstractProcessSocket
         }
         $socket = $this->getProcess($workerId)->exportSocket();
         $data = $this->parser->encode([$data, $wait]);
-        $len = strlen($data);
-        $fileName = uniqid();
-        $writeLen = $this->writeMemory($fileName, $data);
-        if ($len !== $writeLen) {
-            unlink($this->path . '/' . $fileName);
-            throw new \RuntimeException("Write to memory $len but only $writeLen writed");
-        }
-        $data = $this->parser->encode([['readMemory', [$fileName]], $wait]);
+        $pLen = pack('N', strlen($data));
+        $data = $pLen . $data;
         $this->channel->push(1);
         try {
-            while ($data) {
-                $len = $socket->sendAll($data);
-                if (strlen($data) === $len) {
-                    break;
-                }
-                $data = substr($data, $len);
-            }
+            $this->dealSend($socket, $data);
         } catch (\Throwable $exception) {
             $len = strlen($data);
-            unlink($this->path . '/' . $fileName);
             throw new \RuntimeException("$len bytes send failed!");
         } finally {
             $this->channel->pop();
         }
 
         if ($wait) {
-            return $this->parser->decode($socket->recv());
+            return $this->parser->decode($this->dealRecv($socket));
         }
-    }
-
-    /**
-     * @param string $fileName
-     * @param string $data
-     * @return int
-     */
-    public function writeMemory(string $fileName, string &$data): int
-    {
-        return file_put_contents($this->path . '/' . $fileName, $data);
-    }
-
-    /**
-     * @param string $fileName
-     * @return string
-     */
-    public function readMemory(string $fileName): ?string
-    {
-        $data = file_get_contents($this->path . '/' . $fileName);
-        unlink($this->path . '/' . $fileName);
-        [$data, $wait] = $this->parser->decode($data);
-        return $this->handle($data);
     }
 
     /**

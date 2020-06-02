@@ -157,8 +157,8 @@ abstract class Server
                 $server->on('task', [$this, 'onTaskCo']);
             } else {
                 $server->on('task', [$this, 'onTask']);
-                $server->on('finish', [$this, 'onFinish']);
             }
+            $server->on('finish', [$this, 'onFinish']);
         }
         $server->set($this->setting);
         $this->beforeStart($server);
