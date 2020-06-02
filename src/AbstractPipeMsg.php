@@ -5,6 +5,7 @@ namespace rabbit\server;
 
 use rabbit\App;
 use rabbit\exception\InvalidConfigException;
+use rabbit\parser\MsgPackParser;
 use rabbit\parser\ParserInterface;
 
 /**
@@ -22,9 +23,9 @@ abstract class AbstractPipeMsg
      * AbstractPipeMsg constructor.
      * @param ParserInterface $parser
      */
-    public function __construct(ParserInterface $parser)
+    public function __construct(ParserInterface $parser = null)
     {
-        $this->parser = $parser;
+        $this->parser = $parser ?? new MsgPackParser();
     }
 
     /**
