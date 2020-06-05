@@ -16,7 +16,9 @@ class WorkerHandle extends AbstractPipeMsg
      */
     public function pipeMessage(\Swoole\Server $server, &$data): void
     {
-        CommonHandler::handler($this, $data);
+        rgo(function () use (&$data) {
+            CommonHandler::handler($this, $data);
+        });
     }
 
 }

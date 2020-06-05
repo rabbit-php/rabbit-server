@@ -7,8 +7,8 @@ use Co\Channel;
 use Co\Socket;
 use rabbit\helper\FileHelper;
 use rabbit\helper\WaitGroup;
-use rabbit\parser\MsgPackParser;
 use rabbit\parser\ParserInterface;
+use rabbit\parser\PhpParser;
 use Swoole\Process;
 use Swoole\Process\Pool;
 
@@ -38,7 +38,7 @@ abstract class AbstractProcessSocket
      */
     public function __construct(ParserInterface $parser = null)
     {
-        $this->parser = $parser ?? new MsgPackParser();
+        $this->parser = $parser ?? new PhpParser();
         FileHelper::createDirectory($this->path);
         $this->channel = new Channel(1);
     }
