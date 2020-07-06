@@ -6,7 +6,7 @@
  * Time: 14:07
  */
 
-namespace rabbit\server;
+namespace Rabbit\Server;
 
 use rabbit\core\ObjectFactory;
 use rabbit\core\Timer;

@@ -1,6 +1,6 @@
 <?php
 
-namespace rabbit\server;
+namespace Rabbit\Server;
 
 /**
  * Class AttributeEnum

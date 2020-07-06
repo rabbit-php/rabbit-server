@@ -6,7 +6,7 @@
  * Time: 下午5:45
  */
 
-namespace rabbit\server;
+namespace Rabbit\Server;
 
 use rabbit\App;
 use rabbit\core\ObjectFactory;

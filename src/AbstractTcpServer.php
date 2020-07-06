@@ -6,7 +6,7 @@
  * Time: 20:53
  */
 
-namespace rabbit\server;
+namespace Rabbit\Server;
 
 /**
  * Class AbstractTcpServer

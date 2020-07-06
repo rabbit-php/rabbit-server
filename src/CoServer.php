@@ -1,7 +1,7 @@
 <?php
 
 
-namespace rabbit\server;
+namespace Rabbit\Server;
 
 use rabbit\App;
 use rabbit\core\ObjectFactory;

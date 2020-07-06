@@ -1,7 +1,7 @@
 <?php
+declare(strict_types=1);
 
-
-namespace rabbit\server\Task;
+namespace Rabbit\Server\Task;
 
 /**
  * Interface TaskInterface

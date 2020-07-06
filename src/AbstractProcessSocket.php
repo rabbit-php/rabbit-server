@@ -1,7 +1,7 @@
 <?php
 
 
-namespace rabbit\server;
+namespace Rabbit\Server;
 
 use Co\Channel;
 use Co\Socket;

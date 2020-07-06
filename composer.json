@@ -3,7 +3,7 @@
     "description": "rabbit server",
     "type": "library",
     "require": {
-        "rabbit/framework": "^1.0",
+        "rabbit/base": "dev-master",
         "psr/http-server-middleware": "^1.0"
     },
     "license": "MIT",
@@ -15,7 +15,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "rabbit\\server\\": "src/"
+            "Rabbit\\Server\\": "src/"
         }
     }
 }

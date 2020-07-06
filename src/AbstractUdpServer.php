@@ -6,7 +6,7 @@
  * Time: 22:04
  */
 
-namespace rabbit\server;
+namespace Rabbit\Server;
 
 abstract class AbstractUdpServer extends Server
 {

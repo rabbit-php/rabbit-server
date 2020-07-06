@@ -1,7 +1,7 @@
 <?php
 
 
-namespace rabbit\server\Task;
+namespace Rabbit\Server\Task;
 
 use rabbit\App;
 use rabbit\helper\VarDumper;

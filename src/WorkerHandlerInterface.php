@@ -6,7 +6,7 @@
  * Time: 17:05
  */
 
-namespace rabbit\server;
+namespace Rabbit\Server;
 
 /**
  * Class WorkerHandlerInterface

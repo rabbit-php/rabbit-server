@@ -6,7 +6,7 @@
  * Time: 20:06
  */
 
-namespace rabbit\server;
+namespace Rabbit\Server;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;

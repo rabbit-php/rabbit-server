@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace rabbit\server;
+namespace Rabbit\Server;
 
 use rabbit\App;
 use rabbit\core\Timer;
