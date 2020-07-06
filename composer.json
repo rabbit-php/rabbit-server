@@ -3,6 +3,7 @@
   "description": "rabbit server",
   "type": "library",
   "require": {
+    "php": ">=7.4.0",
     "ext-swoole": ">=4.5.0",
     "rabbit/base": "dev-master",
     "rabbit/parser": "dev-master",
