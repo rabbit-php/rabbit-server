@@ -1,16 +1,14 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Administrator
- * Date: 2018/11/26
- * Time: 20:53
- */
+declare(strict_types=1);
 
 namespace Rabbit\Server;
 
+use DI\DependencyException;
+use DI\NotFoundException;
+
 /**
  * Class AbstractTcpServer
- * @package rabbit\pool
+ * @package Rabbit\Server
  */
 abstract class AbstractTcpServer extends Server
 {
@@ -24,8 +22,8 @@ abstract class AbstractTcpServer extends Server
 
     /**
      * @param \Swoole\Server|null $server
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
+     * @throws DependencyException
+     * @throws NotFoundException
      */
     protected function startServer(\Swoole\Server $server = null): void
     {

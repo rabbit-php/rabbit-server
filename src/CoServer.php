@@ -1,12 +1,12 @@
 <?php
-
+declare(strict_types=1);
 
 namespace Rabbit\Server;
 
-use rabbit\App;
-use rabbit\core\ObjectFactory;
-use rabbit\process\Process;
-use rabbit\process\ProcessInterface;
+use DI\DependencyException;
+use DI\NotFoundException;
+use Rabbit\Process\Process;
+use Rabbit\Process\ProcessInterface;
 use Swoole\Process\Pool;
 use Swoole\Runtime;
 
@@ -17,58 +17,53 @@ use Swoole\Runtime;
 abstract class CoServer
 {
     /**
-     * @var array
+     * @var string
      */
-    protected $schme = [];
+    protected string $name = 'rabbit';
 
     /**
      * @var string
      */
-    protected $name = 'rabbit';
-
-    /**
-     * @var string
-     */
-    protected $host = '0.0.0.0';
+    protected string $host = '0.0.0.0';
 
     /**
      * @var int
      */
-    protected $port = 80;
+    protected int $port = 80;
 
     /**
-     * @var int
+     * @var bool
      */
-    protected $ssl = false;
-
-    /**
-     * @var array
-     */
-    protected $beforeStart = [];
+    protected bool $ssl = false;
 
     /**
      * @var array
      */
-    protected $workerExit = [];
+    protected array $beforeStart = [];
 
     /**
      * @var array
      */
-    protected $workerStart = [];
+    protected array $workerExit = [];
+
+    /**
+     * @var array
+     */
+    protected array $workerStart = [];
     /** @var array */
-    protected $processes = [];
+    protected array $processes = [];
     /** @var array */
-    protected $setting = [];
+    protected array $setting = [];
 
-    protected $swooleServer;
+    protected \Co\Server $swooleServer;
 
     /** @var AbstractProcessSocket */
-    protected $socketHandle;
+    protected AbstractProcessSocket $socketHandle;
 
     /**
      * Server constructor.
      * @param array $setting
-     * @throws \Exception
+     * @param array $coSetting
      */
     public function __construct(array $setting = [], array $coSetting = [])
     {
@@ -76,7 +71,10 @@ abstract class CoServer
         \Co::set($coSetting);
     }
 
-    public function getSwooleServer()
+    /**
+     * @return \Co\Server
+     */
+    public function getSwooleServer():\Co\Server
     {
         return $this->swooleServer;
     }
@@ -98,7 +96,7 @@ abstract class CoServer
     }
 
     /**
-     * @return int
+     * @return bool
      */
     public function getSsl(): bool
     {
@@ -106,7 +104,8 @@ abstract class CoServer
     }
 
     /**
-     *
+     * @throws DependencyException
+     * @throws NotFoundException
      */
     public function start(): void
     {
@@ -114,6 +113,10 @@ abstract class CoServer
         $this->startWithPool();
     }
 
+    /**
+     * @throws DependencyException
+     * @throws NotFoundException
+     */
     protected function startWithPool(): void
     {
         $pool = new Pool($this->setting['worker_num'] + count($this->processes), SWOOLE_IPC_UNIXSOCK, 0, true);
@@ -127,7 +130,7 @@ abstract class CoServer
                 });
             }
             if ($workerId < $this->setting['worker_num']) {
-                App::setServer($this);
+                ServerHelper::setCoServer($this);
                 $this->onWorkerStart($workerId);
                 $this->startServer($this->swooleServer = $this->createServer());
             } else {
@@ -153,20 +156,18 @@ abstract class CoServer
 
     /**
      * @param int $workerId
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
+     * @param bool $isTask
+     * @throws DependencyException
+     * @throws NotFoundException
      */
     protected function onWorkerStart(int $workerId, bool $isTask = false): void
     {
-        if (extension_loaded('Zend OPcache')) {
-            opcache_reset();
-        }
         foreach ($this->workerStart as $name => $handle) {
             if (!$handle instanceof WorkerHandlerInterface) {
                 /**
                  * @var WorkerHandlerInterface $handle
                  */
-                $handle = ObjectFactory::createObject($handle);
+                $handle = create($handle);
             }
             $handle->handle($workerId);
         }
@@ -179,19 +180,16 @@ abstract class CoServer
 
     /**
      * @param int $workerId
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
+     * @throws DependencyException
+     * @throws NotFoundException
      */
     protected function onWorkerExit(int $workerId): void
     {
         foreach ($this->workerExit as $name => $handle) {
             if (!$handle instanceof WorkerHandlerInterface) {
-                /**
-                 * @var BootInterface $handle
-                 */
-                $handle = ObjectFactory::createObject($handle);
+                $handle = create($handle);
             }
-            $handle->handle($worker_id);
+            $handle->handle($workerId);
         }
     }
 
@@ -207,8 +205,6 @@ abstract class CoServer
 
     /**
      * @param null $server
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
      */
     protected function startServer($server = null): void
     {
@@ -228,17 +224,14 @@ abstract class CoServer
     }
 
     /**
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
+     * @throws DependencyException
+     * @throws NotFoundException
      */
     protected function beforeStart(): void
     {
         foreach ($this->beforeStart as $name => $handle) {
             if (!$handle instanceof BootInterface) {
-                /**
-                 * @var BootInterface $handle
-                 */
-                $handle = ObjectFactory::createObject($handle);
+                $handle = create($handle);
             }
             $handle->handle();
         }

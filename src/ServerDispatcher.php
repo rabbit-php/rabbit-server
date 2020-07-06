@@ -1,10 +1,5 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Administrator
- * Date: 2018/10/9
- * Time: 18:35
- */
+declare(strict_types=1);
 
 namespace Rabbit\Server;
 
@@ -12,11 +7,10 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use rabbit\contract\DispatcherInterface;
-use rabbit\contract\HandlerInterface;
-use rabbit\core\Context;
-use rabbit\core\ObjectFactory;
-use rabbit\handler\ErrorHandlerInterface;
+use Rabbit\Base\Core\Context;
+use Rabbit\Web\DispatcherInterface;
+use Rabbit\Web\ErrorHandlerInterface;
+use Throwable;
 
 /**
  * Class ServerDispatcher
@@ -27,13 +21,13 @@ class ServerDispatcher implements DispatcherInterface
     /**
      * @var RequestHandlerInterface
      */
-    protected $requestHandler;
+    protected RequestHandlerInterface $requestHandler;
 
     /**
      * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
-     * @throws \Exception
+     * @throws Throwable
      */
     public function dispatch(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
@@ -42,11 +36,11 @@ class ServerDispatcher implements DispatcherInterface
             // before dispatcher
             $requestHandler = clone $this->requestHandler;
             $response = $requestHandler->handle($request);
-        } catch (\Throwable $throw) {
+        } catch (Throwable $throw) {
             /**
              * @var ErrorHandlerInterface $errorHandler
              */
-            $errorHandler = ObjectFactory::get('errorHandler');
+            $errorHandler = getDI('errorHandler');
             $response = $errorHandler->handle($throw);
         }
         $this->afterDispatch($request, $response);
@@ -64,6 +58,7 @@ class ServerDispatcher implements DispatcherInterface
     }
 
     /**
+     * @param RequestInterface $request
      * @param ResponseInterface $response
      */
     protected function afterDispatch(RequestInterface $request, ResponseInterface $response): void

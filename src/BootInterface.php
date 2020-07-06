@@ -1,21 +1,13 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: albert
- * Date: 18-5-17
- * Time: 下午9:42
- */
+declare(strict_types=1);
 
 namespace Rabbit\Server;
 
 /**
  * Interface BootInterface
- * @package rabbit\server
+ * @package Rabbit\Server
  */
 interface BootInterface
 {
-    /**
-     *
-     */
     public function handle(): void;
 }

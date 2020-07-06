@@ -1,9 +1,10 @@
 <?php
-
+declare(strict_types=1);
 
 namespace Rabbit\Server;
 
-use rabbit\core\Exception;
+
+use Rabbit\Base\Core\Exception;
 
 /**
  * Class TaskException

@@ -1,44 +1,45 @@
 <?php
-
+declare(strict_types=1);
 
 namespace Rabbit\Server;
 
 use Co\Channel;
 use Co\Socket;
-use rabbit\helper\FileHelper;
-use rabbit\helper\WaitGroup;
-use rabbit\parser\ParserInterface;
-use rabbit\parser\PhpParser;
+use Rabbit\Base\Core\Exception;
+use Rabbit\Base\Helper\FileHelper;
+use Rabbit\Base\Helper\WaitGroup;
+use Rabbit\Parser\MsgPackParser;
+use Rabbit\Parser\ParserInterface;
 use Swoole\Process;
 use Swoole\Process\Pool;
 
 /**
  * Class AbstractProcessSocket
- * @package rabbit\server
+ * @package Rabbit\Server
  */
 abstract class AbstractProcessSocket
 {
     /** @var ParserInterface */
-    protected $parser;
+    protected ParserInterface $parser;
     /** @var Pool */
-    protected $pool;
+    protected Pool $pool;
     /** @var int */
-    public $workerId;
+    public int $workerId;
     /** @var array */
-    protected $workerIds = [];
+    protected array $workerIds = [];
     /** @var string */
-    protected $path = '/dev/shm/ProcessSocket';
-    /** @var bool */
-    protected $sendBigData = true;
+    protected string $path = '/dev/shm/ProcessSocket';
     /** @var Channel */
-    private $channel;
+    private Channel $channel;
 
     /**
      * ProcessSocket constructor.
+     * @param ParserInterface|null $parser
+     * @throws Exception
      */
     public function __construct(ParserInterface $parser = null)
     {
-        $this->parser = $parser ?? new PhpParser();
+        $this->parser = $parser ?? new MsgPackParser();
         FileHelper::createDirectory($this->path);
         $this->channel = new Channel(1);
     }
@@ -76,6 +77,7 @@ abstract class AbstractProcessSocket
     }
 
     /**
+     * @param int|null $workerId
      * @return Process
      */
     public function getProcess(?int $workerId = null): Process
@@ -115,6 +117,7 @@ abstract class AbstractProcessSocket
     }
 
     /**
+     * @param Socket $socket
      * @param string $data
      */
     private function dealSend(Socket $socket, string &$data): void
@@ -129,6 +132,7 @@ abstract class AbstractProcessSocket
     /**
      * @param $data
      * @param int|null $workerId
+     * @param bool $wait
      * @return mixed
      */
     public function send(&$data, int $workerId = null, bool $wait = false)
@@ -170,12 +174,12 @@ abstract class AbstractProcessSocket
     {
         $workerIds = $this->workerIds;
         unset($workerIds[$this->workerId]);
-        $resulst = [];
+        $result = [];
         if ($return) {
             $group = new WaitGroup();
             foreach ($workerIds as $id) {
                 $group->add($id, function () use ($id, &$data) {
-                    $resulst[$id] = $this->send($data, $id);
+                    $result[$id] = $this->send($data, $id);
                 });
             }
             $group->wait();
@@ -186,11 +190,11 @@ abstract class AbstractProcessSocket
                 });
             }
         }
+        return $result;
     }
 
     /**
-     * @param array $responses
-     * @param string $data
+     * @param array $data
      * @return mixed
      */
     abstract public function handle(array &$data);

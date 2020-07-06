@@ -1,35 +1,34 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: albert
- * Date: 18-5-23
- * Time: 下午5:45
- */
+declare(strict_types=1);
 
 namespace Rabbit\Server;
 
-use rabbit\App;
-use rabbit\core\ObjectFactory;
+use Rabbit\Base\Core\ObjectFactory;
+use Throwable;
 
+/**
+ * Class AddListener
+ * @package Rabbit\Server
+ */
 class AddListener implements BootInterface
 {
     /**
      * @var array
      */
-    private $listen = [];
+    private array $listen = [];
 
     /**
-     * @throws \Exception
+     * @throws Throwable
      */
     public function handle(): void
     {
         foreach ($this->listen as $name => $data) {
-            list($server, $type, $method, $schme) = $data;
-            $config = ObjectFactory::get($schme);
+            list($server, $type, $method, $schema) = $data;
+            $config = ObjectFactory::get($schema);
             if ($type) {
-                $port = App::getServer()->getSwooleServer()->listen($server->getHost(), $server->getPort(), $type);
+                $port = ServerHelper::getServer()->getSwooleServer()->listen($server->getHost(), $server->getPort(), $type);
             } else {
-                $port = App::getServer()->getSwooleServer()->listen($server->getHost(), $server->getPort());
+                $port = ServerHelper::getServer()->getSwooleServer()->listen($server->getHost(), $server->getPort());
             }
             foreach ($method as $bind => $callBack) {
                 $port->on($bind, [$server, $callBack]);

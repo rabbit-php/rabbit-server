@@ -1,16 +1,16 @@
 <?php
 declare(strict_types=1);
 
-namespace Rabbit\Server\Task;
+namespace Rabbit\Server;
 
 /**
- * Interface TaskInterface
- * @package rabbit\server\Task
+ * Class AbstractTask
+ * @package Rabbit\Server
  */
 abstract class AbstractTask
 {
     /** @var string */
-    protected $logKey = 'Task';
+    protected string $logKey = 'Task';
 
     /**
      * AbstractTask constructor.

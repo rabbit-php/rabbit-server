@@ -1,15 +1,16 @@
 <?php
-
+declare(strict_types=1);
 
 namespace Rabbit\Server;
 
+use Exception;
 use rabbit\App;
 use rabbit\exception\InvalidArgumentException;
 use rabbit\helper\ExceptionHelper;
 
 /**
  * Class CommonHandler
- * @package rabbit\server
+ * @package Rabbit\Server
  */
 class CommonHandler
 {
@@ -17,7 +18,7 @@ class CommonHandler
      * @param $ctl
      * @param $data
      * @return mixed|string
-     * @throws \Exception
+     * @throws Exception
      */
     public static function handler($ctl, array &$data)
     {

@@ -1,14 +1,13 @@
 <?php
+declare(strict_types=1);
 
-
-namespace Rabbit\Server\Task;
+namespace Rabbit\Server;
 
 use Exception;
-use rabbit\server\CommonHandler;
 
 /**
  * Class TaskHandler
- * @package rabbit\server\Task
+ * @package Rabbit\Server
  */
 class TaskHandler extends AbstractTask
 {

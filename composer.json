@@ -1,21 +1,31 @@
 {
-    "name": "rabbit/server",
-    "description": "rabbit server",
-    "type": "library",
-    "require": {
-        "rabbit/base": "dev-master",
-        "psr/http-server-middleware": "^1.0"
-    },
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "albert",
-            "email": "63851587@qq.com"
-        }
-    ],
-    "autoload": {
-        "psr-4": {
-            "Rabbit\\Server\\": "src/"
-        }
+  "name": "rabbit/server",
+  "description": "rabbit server",
+  "type": "library",
+  "require": {
+    "ext-swoole": ">=4.5.0",
+    "rabbit/base": "dev-master",
+    "rabbit/parser": "dev-master",
+    "rabbit/web": "dev-master"
+  },
+  "require-dev": {
+    "swoole/ide-helper": "@dev",
+    "phpunit/phpunit": "*"
+  },
+  "suggest": {
+    "rabbit/process": "Use Process",
+    "ext-inotify": "Use Inotify to reload"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "albert",
+      "email": "63851587@qq.com"
     }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Rabbit\\Server\\": "src/"
+    }
+  }
 }

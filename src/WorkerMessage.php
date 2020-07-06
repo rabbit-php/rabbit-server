@@ -1,14 +1,8 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Administrator
- * Date: 2018/11/26
- * Time: 22:04
- */
+declare(strict_types=1);
 
 namespace Rabbit\Server;
 
-use rabbit\App;
 
 /**
  * Class WorkerMessage
@@ -17,12 +11,12 @@ use rabbit\App;
 class WorkerMessage
 {
     /**
-     * @param string $msg
+     * @param array $msg
      * @param int $workerId
      */
     public function send(array $msg, int $workerId = -1)
     {
-        $server = App::getServer()->getSwooleServer();
+        $server = ServerHelper::getServer()->getSwooleServer();
         if ($workerId === -1) {
             for ($i = 0; $i < $server->setting['worker_num']; $i++) {
                 $i !== $server->worker_id && $server->sendMessage($msg, $i);

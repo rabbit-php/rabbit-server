@@ -1,19 +1,20 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Administrator
- * Date: 2018/10/8
- * Time: 19:09
- */
+declare(strict_types=1);
 
 namespace Rabbit\Server;
 
-use rabbit\App;
-use rabbit\contract\DispatcherInterface;
-use rabbit\core\ObjectFactory;
-use rabbit\helper\ExceptionHelper;
-use rabbit\helper\VarDumper;
-use rabbit\server\Task\AbstractTask;
+use DI\DependencyException;
+use DI\NotFoundException;
+use Exception;
+use Rabbit\Base\App;
+use Rabbit\Base\Helper\ExceptionHelper;
+use Rabbit\Base\Helper\VarDumper;
+use Rabbit\Web\DispatcherInterface;
+use Swoole\Http\Request;
+use Swoole\Http\Response;
+use Swoole\Server\Task;
+use Swoole\WebSocket\Frame;
+use Throwable;
 
 /**
  * Class Server
@@ -22,63 +23,58 @@ use rabbit\server\Task\AbstractTask;
 abstract class Server
 {
     /**
-     * @var array
+     * @var string
      */
-    protected $schme = [];
+    protected string $name = 'rabbit';
 
     /**
      * @var string
      */
-    protected $name = 'rabbit';
-
-    /**
-     * @var string
-     */
-    protected $host = '0.0.0.0';
+    protected string $host = '0.0.0.0';
 
     /**
      * @var int
      */
-    protected $port = 80;
+    protected int $port = 80;
 
     /**
      * @var int
      */
-    protected $type = SWOOLE_BASE;
+    protected int $type = SWOOLE_BASE;
 
     /**
      * @var DispatcherInterface
      */
-    protected $dispatcher;
+    protected DispatcherInterface $dispatcher;
 
     /**
      * @var array
      */
-    protected $beforeStart = [];
+    protected array $beforeStart = [];
 
     /**
      * @var array
      */
-    protected $workerExit = [];
+    protected array $workerExit = [];
 
     /**
      * @var array
      */
-    protected $workerStart = [];
+    protected array $workerStart = [];
 
     /** @var array */
-    protected $setting = [];
-    /** @var AbstractTask */
-    public $taskHandle;
+    protected array $setting = [];
     /** @var AbstractPipeMsg */
-    public $pipeHandler;
+    public AbstractPipeMsg $pipeHandler;
     /** @var \Swoole\Server */
-    protected $swooleServer;
+    protected \Swoole\Server $swooleServer;
+    /** @var AbstractTask */
+    private AbstractTask $taskHandle;
 
     /**
      * Server constructor.
      * @param array $setting
-     * @throws \Exception
+     * @param array $coSetting
      */
     public function __construct(array $setting = [], array $coSetting = [])
     {
@@ -133,12 +129,12 @@ abstract class Server
 
     /**
      * @param \Swoole\Server|null $server
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
+     * @throws DependencyException
+     * @throws NotFoundException
      */
     protected function startServer(\Swoole\Server $server = null): void
     {
-        App::setServer($this);
+        ServerHelper::setServer($this);
         $server->on('start', [$this, 'onStart']);
         $server->on('shutdown', [$this, 'onShutdown']);
 
@@ -152,6 +148,7 @@ abstract class Server
         if ($this->taskHandle !== null && !isset($this->setting['task_worker_num'])) {
             $this->setting['task_worker_num'] = swoole_cpu_num();
         }
+
         if (isset($this->setting['task_worker_num']) && $this->setting['task_worker_num'] > 0) {
             if (isset($this->setting['task_enable_coroutine']) && $this->setting['task_enable_coroutine']) {
                 $server->on('task', [$this, 'onTaskCo']);
@@ -177,8 +174,9 @@ abstract class Server
     }
 
     /**
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
+     * @param \Swoole\Server $server
+     * @throws DependencyException
+     * @throws NotFoundException
      */
     protected function beforeStart(\Swoole\Server $server): void
     {
@@ -187,7 +185,7 @@ abstract class Server
                 /**
                  * @var BootInterface $handle
                  */
-                $handle = ObjectFactory::createObject($handle);
+                $handle = create($handle);
             }
             $handle->handle();
         }
@@ -196,20 +194,17 @@ abstract class Server
     /**
      * @param \Swoole\Server $server
      * @param int $worker_id
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
+     * @throws DependencyException
+     * @throws NotFoundException
      */
     public function workerStart(\Swoole\Server $server, int $worker_id): void
     {
-        if (extension_loaded('Zend OPcache')) {
-            opcache_reset();
-        }
         foreach ($this->workerStart as $name => $handle) {
             if (!$handle instanceof WorkerHandlerInterface) {
                 /**
                  * @var WorkerHandlerInterface $handle
                  */
-                $handle = ObjectFactory::createObject($handle);
+                $handle = create($handle);
             }
             $handle->handle($worker_id);
         }
@@ -250,6 +245,8 @@ abstract class Server
     /**
      * @param \Swoole\Server $server
      * @param int $worker_id
+     * @throws DependencyException
+     * @throws NotFoundException
      */
     public function onWorkerStart(\Swoole\Server $server, int $worker_id): void
     {
@@ -269,16 +266,13 @@ abstract class Server
      */
     public function onWorkerStop(\Swoole\Server $server, int $worker_id): void
     {
-        if (extension_loaded('Zend OPcache')) {
-            opcache_reset();
-        }
     }
 
     /**
      * @param \Swoole\Server $server
      * @param int $worker_id
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
+     * @throws DependencyException
+     * @throws NotFoundException
      */
     public function onWorkerExit(\Swoole\Server $server, int $worker_id)
     {
@@ -287,7 +281,7 @@ abstract class Server
                 /**
                  * @var BootInterface $handle
                  */
-                $handle = ObjectFactory::createObject($handle);
+                $handle = create($handle);
             }
             $handle->handle($worker_id);
         }
@@ -307,40 +301,36 @@ abstract class Server
      * @param int $fd
      * @param int $reactor_id
      * @param string $data
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
      */
     public function onReceive(\Swoole\Server $server, int $fd, int $reactor_id, string $data): void
     {
     }
 
     /**
-     * @param \Swoole\Http\Request $request
-     * @param \Swoole\Http\Response $response
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
+     * @param Request $request
+     * @param Response $response
      */
-    public function onRequest(\Swoole\Http\Request $request, \Swoole\Http\Response $response): void
+    public function onRequest(Request $request, Response $response): void
     {
     }
 
     /**
      * @param \Swoole\WebSocket\Server $server
-     * @param \Swoole\WebSocket\Frame $frame
+     * @param Frame $frame
      */
-    public function onMessage(\Swoole\WebSocket\Server $server, \Swoole\WebSocket\Frame $frame): void
+    public function onMessage(\Swoole\WebSocket\Server $server, Frame $frame): void
     {
     }
 
     /**
      * @param \Swoole\WebSocket\Server $server
-     * @param \Swoole\Http\Request $request
+     * @param Request $request
      */
-    public function onOpen(\Swoole\WebSocket\Server $server, \Swoole\Http\Request $request): void
+    public function onOpen(\Swoole\WebSocket\Server $server, Request $request): void
     {
     }
 
-    public function onHandShake(\Swoole\Http\Request $request, \Swoole\Http\Response $response): bool
+    public function onHandShake(Request $request, Response $response): bool
     {
     }
 
@@ -348,8 +338,6 @@ abstract class Server
      * @param \Swoole\Server $server
      * @param string $data
      * @param array $client_info
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
      */
     public function onPacket(\Swoole\Server $server, string $data, array $client_info): void
     {
@@ -365,18 +353,19 @@ abstract class Server
     }
 
     /**
-     * @param \Swoole\Server $serv
+     * @param \Swoole\Server $server
      * @param int $task_id
      * @param int $from_id
      * @param $data
-     * @return \Exception|string|\Throwable
+     * @return Exception|string|Throwable
+     * @throws Throwable
      */
-    public function onTask(\Swoole\Server $serv, int $task_id, int $from_id, $data)
+    public function onTask(\Swoole\Server $server, int $task_id, int $from_id, $data)
     {
         try {
             $result = $this->taskHandle->handle($task_id, $from_id, $data);
             return $result === null ? '' : $result;
-        } catch (\Throwable $throwable) {
+        } catch (Throwable $throwable) {
             App::error(
                 VarDumper::getDumper()->dumpAsString(ExceptionHelper::convertExceptionToArray($throwable)),
                 'Task'
@@ -386,15 +375,16 @@ abstract class Server
     }
 
     /**
-     * @param \Swoole\Server $serv
-     * @param \Swoole\Server\Task $task
+     * @param \Swoole\Server $server
+     * @param Task $task
+     * @throws Throwable
      */
-    public function onTaskCo(\Swoole\Server $serv, \Swoole\Server\Task $task)
+    public function onTaskCo(\Swoole\Server $server, Task $task)
     {
         try {
             $result = $this->taskHandle->handle($task->id, $task->worker_id, $task->data);
             $task->finish($result === null ? '' : $result);
-        } catch (\Throwable $throwable) {
+        } catch (Throwable $throwable) {
             App::error(
                 VarDumper::getDumper()->dumpAsString(ExceptionHelper::convertExceptionToArray($throwable)),
                 'Task'
@@ -404,13 +394,13 @@ abstract class Server
     }
 
     /**
-     * @param \Swoole\Server $serv
+     * @param \Swoole\Server $server
      * @param int $task_id
      * @param string $data
      */
-    public function onFinish(\Swoole\Server $serv, int $task_id, string $data): void
+    public function onFinish(\Swoole\Server $server, int $task_id, string $data): void
     {
-        $this->taskHandle->finish($serv, $task_id, $data);
+        $this->taskHandle->finish($server, $task_id, $data);
     }
 
     /**
@@ -424,12 +414,12 @@ abstract class Server
     }
 
     /**
-     * @param \Swoole\Server $serv
+     * @param \Swoole\Server $server
      * @param int $worker_id
      * @param int $worker_pid
      * @param int $exit_code
      */
-    public function onWorkerError(\Swoole\Server $serv, int $worker_id, int $worker_pid, int $exit_code): void
+    public function onWorkerError(\Swoole\Server $server, int $worker_id, int $worker_pid, int $exit_code): void
     {
     }
 
@@ -442,9 +432,9 @@ abstract class Server
     }
 
     /**
-     * @param \Swoole\Server $serv
+     * @param \Swoole\Server $server
      */
-    public function onManagerStop(\Swoole\Server $serv): void
+    public function onManagerStop(\Swoole\Server $server): void
     {
     }
 }

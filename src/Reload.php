@@ -3,26 +3,28 @@ declare(strict_types=1);
 
 namespace Rabbit\Server;
 
-use rabbit\App;
-use rabbit\core\Timer;
-use rabbit\helper\FileHelper;
+use Rabbit\Base\App;
+use Rabbit\Base\Core\Timer;
+use Rabbit\Base\Helper\FileHelper;
 use Swoole\Table;
+use Throwable;
 
 /**
  * Class Reload
- * @package rabbit\server
+ * @package Rabbit\Server
  */
 class Reload implements WorkerHandlerInterface
 {
     /** @var string */
-    protected $path;
+    protected string $path;
     /** @var array */
-    protected $ext = [];
-    /** @var bool */
-    protected $isInotify = true;
+    protected array $ext = [];
+    /** @var Table */
+    protected Table $table;
 
     /**
      * Reload constructor.
+     * @param string $path
      */
     public function __construct(string $path)
     {
@@ -31,6 +33,7 @@ class Reload implements WorkerHandlerInterface
 
     /**
      * @param int $worker_id
+     * @throws Throwable
      */
     public function handle(int $worker_id): void
     {
@@ -45,7 +48,7 @@ class Reload implements WorkerHandlerInterface
                 $this->table->column('mtime', Table::TYPE_INT, 4);
                 $this->table->create();
                 $this->runComparison();
-                Timer::tick(1000, function () {
+                Timer::addTickTimer('reload', 1000, function () {
                     $this->runComparison();
                 });
                 App::info("server hot reload start : use timer tick comparison");
@@ -55,13 +58,14 @@ class Reload implements WorkerHandlerInterface
 
     /**
      * 扫描文件变更
+     * @throws Throwable
      */
     private function runComparison()
     {
         $startTime = microtime(true);
         $doReload = false;
 
-        $dirIterator = new \RecursiveDirectoryIterator($this->monitorDir);
+        $dirIterator = new \RecursiveDirectoryIterator($this->path);
         $iterator = new \RecursiveIteratorIterator($dirIterator);
         $inodeList = array();
 
@@ -99,13 +103,8 @@ class Reload implements WorkerHandlerInterface
             $count = $this->table->count();
             $time = date('Y-m-d H:i:s');
             $usage = round(microtime(true) - $startTime, 3);
-            if (!$this->isReady == false) {
-                App::info("severReload at {$time} use : {$usage} s total: {$count} files");
-                App::getServer()->getSwooleServer()->reload();
-            } else {
-                App::info("hot reload ready at {$time} use : {$usage} s total: {$count} files");
-                $this->isReady = true;
-            }
+            App::info("severReload at {$time} use : {$usage} s total: {$count} files");
+            ServerHelper::getServer()->getSwooleServer()->reload();
         }
     }
 
@@ -127,7 +126,7 @@ class Reload implements WorkerHandlerInterface
             $events = inotify_read($inotifyResource);
             if ($lastReloadTime < time() && !empty($events)) {
                 $lastReloadTime = time();
-                App::getServer()->getSwooleServer()->reload();
+                ServerHelper::getServer()->getSwooleServer()->reload();
             }
         });
     }

@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Rabbit\Server;
 
+use Exception;
+
 /**
  * Class WorkerMsg
  * @package rabbit\server
@@ -12,7 +14,7 @@ class WorkerHandle extends AbstractPipeMsg
     /**
      * @param \Swoole\Server $server
      * @param $data
-     * @throws \Exception
+     * @throws Exception
      */
     public function pipeMessage(\Swoole\Server $server, &$data): void
     {

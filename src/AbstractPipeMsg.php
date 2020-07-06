@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 namespace Rabbit\Server;
 
-use rabbit\App;
-use rabbit\exception\InvalidConfigException;
-use rabbit\parser\ParserInterface;
-use rabbit\parser\PhpParser;
+use Rabbit\Base\App;
+use Rabbit\Base\Exception\InvalidConfigException;
+use Rabbit\Parser\MsgPackParser;
+use Rabbit\Parser\ParserInterface;
 
 /**
  * Class AbstractPipeMsg
@@ -15,9 +15,9 @@ use rabbit\parser\PhpParser;
 abstract class AbstractPipeMsg
 {
     /** @var ParserInterface */
-    protected $parser;
+    protected ParserInterface $parser;
     /** @var \Swoole\Server */
-    protected $server;
+    protected \Swoole\Server $server;
 
     /**
      * AbstractPipeMsg constructor.
@@ -25,7 +25,7 @@ abstract class AbstractPipeMsg
      */
     public function __construct(ParserInterface $parser = null)
     {
-        $this->parser = $parser ?? new PhpParser();
+        $this->parser = $parser ?? new MsgPackParser();
     }
 
     /**
@@ -35,7 +35,7 @@ abstract class AbstractPipeMsg
      */
     public function sendMessage(&$msg, int $workerId): void
     {
-        $server = App::getServer()->getSwooleServer();
+        $server = App::getServer();
         if (!$server instanceof \Swoole\Server) {
             throw new InvalidConfigException("only use for swoole_server");
         }
@@ -54,6 +54,7 @@ abstract class AbstractPipeMsg
     }
 
     /**
+     * @param \Swoole\Server $server
      * @param $data
      */
     abstract public function pipeMessage(\Swoole\Server $server, &$data): void;

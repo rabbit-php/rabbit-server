@@ -1,18 +1,21 @@
 <?php
+declare(strict_types=1);
 
 
 namespace Rabbit\Server;
 
+use Exception;
+
 /**
  * Class ProcessSocket
- * @package rabbit\httpserver\websocket
+ * @package Rabbit\Server
  */
 class ProcessSocket extends AbstractProcessSocket
 {
     /**
-     * @param string $data
+     * @param array $data
      * @return string
-     * @throws \Exception
+     * @throws Exception
      */
     public function handle(array &$data)
     {

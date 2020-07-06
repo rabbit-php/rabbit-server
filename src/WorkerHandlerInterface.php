@@ -1,16 +1,11 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Administrator
- * Date: 2018/10/23
- * Time: 17:05
- */
+declare(strict_types=1);
 
 namespace Rabbit\Server;
 
 /**
- * Class WorkerHandlerInterface
- * @package rabbit\server
+ * Interface WorkerHandlerInterface
+ * @package Rabbit\Server
  */
 interface WorkerHandlerInterface
 {
