@@ -65,11 +65,11 @@ abstract class Server
     /** @var array */
     protected array $setting = [];
     /** @var AbstractPipeMsg */
-    public AbstractPipeMsg $pipeHandler;
+    public ?AbstractPipeMsg $pipeHandler = null;
     /** @var \Swoole\Server */
     protected \Swoole\Server $swooleServer;
     /** @var AbstractTask */
-    private AbstractTask $taskHandle;
+    public ?AbstractTask $taskHandle = null;
 
     /**
      * Server constructor.
