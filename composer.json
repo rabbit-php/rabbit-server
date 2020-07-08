@@ -10,6 +10,7 @@
     "rabbit/web": "dev-master"
   },
   "require-dev": {
+    "rabbit/process": "dev-master",
     "swoole/ide-helper": "@dev",
     "phpunit/phpunit": "*"
   },

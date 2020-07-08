@@ -12,7 +12,7 @@ use Swoole\Runtime;
 
 /**
  * Class CoServer
- * @package rabbit\server
+ * @package Rabbit\Server
  */
 abstract class CoServer
 {
