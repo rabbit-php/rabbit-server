@@ -35,7 +35,7 @@ abstract class AbstractPipeMsg
      */
     public function sendMessage(&$msg, int $workerId): void
     {
-        $server = App::getServer();
+        $server = ServerHelper::getServer();
         if (!$server instanceof \Swoole\Server) {
             throw new InvalidConfigException("only use for swoole_server");
         }
