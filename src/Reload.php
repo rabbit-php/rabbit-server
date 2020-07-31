@@ -114,8 +114,8 @@ class Reload implements WorkerHandlerInterface
 
         $inotifyResource = inotify_init();
 
-        FileHelper::findFiles($this->path, [
-            'filter' => function ($path) use ($inotifyResource) {
+        FileHelper::dealFiles($this->path, [
+            'filter' => function (string $path) use ($inotifyResource) {
                 inotify_add_watch($inotifyResource, $path, IN_CREATE | IN_DELETE | IN_MODIFY);
                 return true;
             }
