@@ -5,9 +5,9 @@ namespace Rabbit\Server;
 
 use Co\Channel;
 use Co\Socket;
+use Co\WaitGroup;
 use Rabbit\Base\Core\Exception;
 use Rabbit\Base\Helper\FileHelper;
-use Rabbit\Base\Helper\WaitGroup;
 use Rabbit\Parser\MsgPackParser;
 use Rabbit\Parser\ParserInterface;
 use Swoole\Process;
@@ -166,23 +166,22 @@ abstract class AbstractProcessSocket
 
     /**
      * @param $data
-     * @param bool $return
+     * @param float $wait
      * @return array
-     * @throws \Exception
      */
-    public function sendAll(&$data, bool $return = false): array
+    public function sendAll(&$data, float $wait = 0): array
     {
         $workerIds = $this->workerIds;
         unset($workerIds[$this->workerId]);
         $result = [];
-        if ($return) {
-            $group = new WaitGroup();
+        if ($wait !== 0) {
+            $wg = new WaitGroup();
             foreach ($workerIds as $id) {
-                $group->add($id, function () use ($id, &$data) {
-                    $result[$id] = $this->send($data, $id);
+                wgo($wg, function () use ($id, &$result, &$data) {
+                    $result[] = $this->send($data, $id);
                 });
             }
-            $group->wait();
+            $wg->wait($wait > 0 ? $wait : -1);
         } else {
             foreach ($workerIds as $id) {
                 rgo(function () use ($id, &$data) {
