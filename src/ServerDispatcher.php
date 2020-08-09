@@ -3,13 +3,13 @@ declare(strict_types=1);
 
 namespace Rabbit\Server;
 
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Rabbit\Base\Core\Context;
 use Rabbit\Web\DispatcherInterface;
 use Rabbit\Web\ErrorHandlerInterface;
+use Rabbit\Web\RequestContext;
+use Rabbit\Web\ResponseContext;
 use Throwable;
 
 /**
@@ -31,7 +31,8 @@ class ServerDispatcher implements DispatcherInterface
      */
     public function dispatch(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $this->beforeDispatch($request, $response);
+        RequestContext::set($request);
+        ResponseContext::set($response);
         try {
             // before dispatcher
             $requestHandler = clone $this->requestHandler;
@@ -43,26 +44,7 @@ class ServerDispatcher implements DispatcherInterface
             $errorHandler = getDI('errorHandler');
             $response = $errorHandler->handle($throw);
         }
-        $this->afterDispatch($request, $response);
-        return $response;
-    }
-
-    /**
-     * @param RequestInterface $request
-     * @param ResponseInterface $response
-     */
-    protected function beforeDispatch(RequestInterface $request, ResponseInterface $response): void
-    {
-        Context::set('request', $request);
-        Context::set('response', $response);
-    }
-
-    /**
-     * @param RequestInterface $request
-     * @param ResponseInterface $response
-     */
-    protected function afterDispatch(RequestInterface $request, ResponseInterface $response): void
-    {
         $response->send();
+        return $response;
     }
 }

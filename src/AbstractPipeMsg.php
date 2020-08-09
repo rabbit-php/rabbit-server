@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Rabbit\Server;
 
-use Rabbit\Base\App;
 use Rabbit\Base\Exception\InvalidConfigException;
 use Rabbit\Parser\MsgPackParser;
 use Rabbit\Parser\ParserInterface;
@@ -21,7 +20,7 @@ abstract class AbstractPipeMsg
 
     /**
      * AbstractPipeMsg constructor.
-     * @param ParserInterface $parser
+     * @param ParserInterface|null $parser
      */
     public function __construct(ParserInterface $parser = null)
     {
