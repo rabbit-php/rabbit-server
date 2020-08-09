@@ -5,13 +5,14 @@ namespace Rabbit\Server;
 
 use Co\Channel;
 use Co\Socket;
-use Co\WaitGroup;
 use Rabbit\Base\Core\Exception;
+use Rabbit\Base\Core\WaitGroup;
 use Rabbit\Base\Helper\FileHelper;
 use Rabbit\Parser\MsgPackParser;
 use Rabbit\Parser\ParserInterface;
 use Swoole\Process;
 use Swoole\Process\Pool;
+use Throwable;
 
 /**
  * Class AbstractProcessSocket
@@ -152,7 +153,7 @@ abstract class AbstractProcessSocket
         $this->channel->push(1);
         try {
             $this->dealSend($socket, $data);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             $len = strlen($data);
             throw new \RuntimeException("$len bytes send failed!");
         } finally {
@@ -168,6 +169,7 @@ abstract class AbstractProcessSocket
      * @param $data
      * @param float $wait
      * @return array
+     * @throws Throwable
      */
     public function sendAll(&$data, float $wait = 0): array
     {
