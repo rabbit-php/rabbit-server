@@ -177,7 +177,7 @@ abstract class AbstractProcessSocket
         if ($wait !== 0) {
             $wg = new WaitGroup();
             foreach ($workerIds as $id) {
-                wgo($wg, function () use ($id, &$result, &$data) {
+                $wg->add(function () use ($id, &$result, &$data) {
                     $result[] = $this->send($data, $id);
                 });
             }
