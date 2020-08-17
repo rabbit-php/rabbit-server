@@ -10,77 +10,27 @@ use Rabbit\Base\App;
 use Rabbit\Base\Helper\ExceptionHelper;
 use Rabbit\Base\Helper\VarDumper;
 use Rabbit\Web\DispatcherInterface;
+use ReflectionException;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
+use Swoole\Process;
 use Swoole\Server\Task;
 use Swoole\WebSocket\Frame;
 use Throwable;
 
 /**
  * Class Server
- * @package rabbit\server
+ * @package Rabbit\Server
  */
 abstract class Server
 {
-    /**
-     * @var string
-     */
-    protected string $name = 'rabbit';
+    use ServerTrait;
 
-    /**
-     * @var string
-     */
-    protected string $host = '0.0.0.0';
-
-    /**
-     * @var int
-     */
-    protected int $port = 80;
-
-    /**
-     * @var int
-     */
-    protected int $type = SWOOLE_BASE;
-
-    /**
-     * @var DispatcherInterface
-     */
-    protected DispatcherInterface $dispatcher;
-
-    /**
-     * @var array
-     */
-    protected array $beforeStart = [];
-
-    /**
-     * @var array
-     */
-    protected array $workerExit = [];
-
-    /**
-     * @var array
-     */
-    protected array $workerStart = [];
-
-    /** @var array */
-    protected array $setting = [];
-    /** @var AbstractPipeMsg */
+    protected int $type = SWOOLE_PROCESS;
+    protected ?DispatcherInterface $dispatcher = null;
     public ?AbstractPipeMsg $pipeHandler = null;
-    /** @var \Swoole\Server */
     protected \Swoole\Server $swooleServer;
-    /** @var AbstractTask */
     public ?AbstractTask $taskHandle = null;
-
-    /**
-     * Server constructor.
-     * @param array $setting
-     * @param array $coSetting
-     */
-    public function __construct(array $setting = [], array $coSetting = [])
-    {
-        $this->setting = $setting;
-        \Co::set($coSetting);
-    }
 
     /**
      * @return \Swoole\Server
@@ -88,22 +38,6 @@ abstract class Server
     public function getSwooleServer(): \Swoole\Server
     {
         return $this->swooleServer;
-    }
-
-    /**
-     * @return string
-     */
-    public function getHost(): string
-    {
-        return $this->host;
-    }
-
-    /**
-     * @return int
-     */
-    public function getPort(): int
-    {
-        return $this->port;
     }
 
     /**
@@ -130,7 +64,7 @@ abstract class Server
     /**
      * @param \Swoole\Server|null $server
      * @throws DependencyException
-     * @throws NotFoundException
+     * @throws NotFoundException|ReflectionException
      */
     protected function startServer(\Swoole\Server $server = null): void
     {
@@ -158,7 +92,7 @@ abstract class Server
             $server->on('finish', [$this, 'onFinish']);
         }
         $server->set($this->setting);
-        $this->beforeStart($server);
+        $this->beforeStart();
     }
 
     /**
@@ -174,50 +108,13 @@ abstract class Server
     }
 
     /**
-     * @param \Swoole\Server $server
-     * @throws DependencyException
-     * @throws NotFoundException
-     */
-    protected function beforeStart(\Swoole\Server $server): void
-    {
-        foreach ($this->beforeStart as $name => $handle) {
-            if (!$handle instanceof BootInterface) {
-                /**
-                 * @var BootInterface $handle
-                 */
-                $handle = create($handle);
-            }
-            $handle->handle();
-        }
-    }
-
-    /**
-     * @param \Swoole\Server $server
-     * @param int $worker_id
-     * @throws DependencyException
-     * @throws NotFoundException
-     */
-    public function workerStart(\Swoole\Server $server, int $worker_id): void
-    {
-        foreach ($this->workerStart as $name => $handle) {
-            if (!$handle instanceof WorkerHandlerInterface) {
-                /**
-                 * @var WorkerHandlerInterface $handle
-                 */
-                $handle = create($handle);
-            }
-            $handle->handle($worker_id);
-        }
-    }
-
-    /**
      *
      */
     public function stop(): void
     {
         if ($this->swooleServer->setting['pid_file']) {
             $pid = file_get_contents($this->swooleServer->setting['pid_file']);
-            \Swoole\Process::kill(intval($pid));
+            Process::kill(intval($pid));
         }
     }
 
@@ -246,18 +143,11 @@ abstract class Server
      * @param \Swoole\Server $server
      * @param int $worker_id
      * @throws DependencyException
-     * @throws NotFoundException
+     * @throws NotFoundException|ReflectionException
      */
     public function onWorkerStart(\Swoole\Server $server, int $worker_id): void
     {
-        if (!$server->taskworker) {
-            //worker
-            $this->setProcessTitle($this->name . ': worker' . ": {$worker_id}");
-        } else {
-            //task
-            $this->setProcessTitle($this->name . ': task' . ": {$worker_id}");
-        }
-        $this->workerStart($server, $worker_id);
+        $this->workerStart($worker_id, $server->taskworker);
     }
 
     /**
@@ -266,25 +156,6 @@ abstract class Server
      */
     public function onWorkerStop(\Swoole\Server $server, int $worker_id): void
     {
-    }
-
-    /**
-     * @param \Swoole\Server $server
-     * @param int $worker_id
-     * @throws DependencyException
-     * @throws NotFoundException
-     */
-    public function onWorkerExit(\Swoole\Server $server, int $worker_id)
-    {
-        foreach ($this->workerExit as $name => $handle) {
-            if (!$handle instanceof WorkerHandlerInterface) {
-                /**
-                 * @var BootInterface $handle
-                 */
-                $handle = create($handle);
-            }
-            $handle->handle($worker_id);
-        }
     }
 
     /**

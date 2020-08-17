@@ -7,6 +7,7 @@ use DI\DependencyException;
 use DI\NotFoundException;
 use Rabbit\Process\Process;
 use Rabbit\Process\ProcessInterface;
+use ReflectionException;
 use Swoole\Process\Pool;
 use Swoole\Runtime;
 
@@ -16,83 +17,17 @@ use Swoole\Runtime;
  */
 abstract class CoServer
 {
-    /**
-     * @var string
-     */
-    protected string $name = 'rabbit';
-
-    /**
-     * @var string
-     */
-    protected string $host = '0.0.0.0';
-
-    /**
-     * @var int
-     */
-    protected int $port = 80;
-
-    /**
-     * @var bool
-     */
-    protected bool $ssl = false;
-
-    /**
-     * @var array
-     */
-    protected array $beforeStart = [];
-
-    /**
-     * @var array
-     */
-    protected array $workerExit = [];
-
-    /**
-     * @var array
-     */
-    protected array $workerStart = [];
-    /** @var array */
-    protected array $processes = [];
-    /** @var array */
-    protected array $setting = [];
+    use ServerTrait;
 
     protected \Co\Server $swooleServer;
-
-    /** @var AbstractProcessSocket */
     protected AbstractProcessSocket $socketHandle;
-
-    /**
-     * Server constructor.
-     * @param array $setting
-     * @param array $coSetting
-     */
-    public function __construct(array $setting = [], array $coSetting = [])
-    {
-        $this->setting = $setting;
-        \Co::set($coSetting);
-    }
 
     /**
      * @return \Co\Server
      */
-    public function getSwooleServer():\Co\Server
+    public function getSwooleServer(): \Co\Server
     {
         return $this->swooleServer;
-    }
-
-    /**
-     * @return string
-     */
-    public function getHost(): string
-    {
-        return $this->host;
-    }
-
-    /**
-     * @return int
-     */
-    public function getPort(): int
-    {
-        return $this->port;
     }
 
     /**
@@ -105,7 +40,7 @@ abstract class CoServer
 
     /**
      * @throws DependencyException
-     * @throws NotFoundException
+     * @throws NotFoundException|ReflectionException
      */
     public function start(): void
     {
@@ -115,7 +50,7 @@ abstract class CoServer
 
     /**
      * @throws DependencyException
-     * @throws NotFoundException
+     * @throws NotFoundException|ReflectionException
      */
     protected function startWithPool(): void
     {
@@ -155,45 +90,6 @@ abstract class CoServer
     }
 
     /**
-     * @param int $workerId
-     * @param bool $isTask
-     * @throws DependencyException
-     * @throws NotFoundException
-     */
-    protected function onWorkerStart(int $workerId, bool $isTask = false): void
-    {
-        foreach ($this->workerStart as $name => $handle) {
-            if (!$handle instanceof WorkerHandlerInterface) {
-                /**
-                 * @var WorkerHandlerInterface $handle
-                 */
-                $handle = create($handle);
-            }
-            $handle->handle($workerId);
-        }
-        if ($isTask) {
-            $this->setProcessTitle($this->name . ': task' . ": {$workerId}");
-        } else {
-            $this->setProcessTitle($this->name . ': worker' . ": {$workerId}");
-        }
-    }
-
-    /**
-     * @param int $workerId
-     * @throws DependencyException
-     * @throws NotFoundException
-     */
-    protected function onWorkerExit(int $workerId): void
-    {
-        foreach ($this->workerExit as $name => $handle) {
-            if (!$handle instanceof WorkerHandlerInterface) {
-                $handle = create($handle);
-            }
-            $handle->handle($workerId);
-        }
-    }
-
-    /**
      * @return AbstractProcessSocket
      */
     public function getProcessSocket(): AbstractProcessSocket
@@ -220,20 +116,6 @@ abstract class CoServer
             @swoole_set_process_name($name);
         } else {
             @cli_set_process_title($name);
-        }
-    }
-
-    /**
-     * @throws DependencyException
-     * @throws NotFoundException
-     */
-    protected function beforeStart(): void
-    {
-        foreach ($this->beforeStart as $name => $handle) {
-            if (!$handle instanceof BootInterface) {
-                $handle = create($handle);
-            }
-            $handle->handle();
         }
     }
 }

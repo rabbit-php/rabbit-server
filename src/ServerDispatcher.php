@@ -6,6 +6,7 @@ namespace Rabbit\Server;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Rabbit\Base\Core\BaseObject;
 use Rabbit\Web\DispatcherInterface;
 use Rabbit\Web\ErrorHandlerInterface;
 use Rabbit\Web\RequestContext;
@@ -16,7 +17,7 @@ use Throwable;
  * Class ServerDispatcher
  * @package rabbit\server
  */
-class ServerDispatcher implements DispatcherInterface
+class ServerDispatcher extends BaseObject implements DispatcherInterface
 {
     /**
      * @var RequestHandlerInterface
