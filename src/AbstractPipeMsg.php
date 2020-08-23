@@ -1,60 +1,101 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Rabbit\Server;
 
+use Rabbit\Base\Contract\InitInterface;
+use Rabbit\Base\Core\Context;
 use Rabbit\Base\Exception\InvalidConfigException;
 use Rabbit\Parser\MsgPackParser;
 use Rabbit\Parser\ParserInterface;
+use Rabbit\Server\ServerHelper;
+use Swoole\Coroutine\Channel;
+use Swoole\Server;
 
 /**
  * Class AbstractPipeMsg
- * @package rabbit\server
+ * @package Rabbit\Server
  */
-abstract class AbstractPipeMsg
+abstract class AbstractPipeMsg implements InitInterface
 {
-    /** @var ParserInterface */
     protected ParserInterface $parser;
-    /** @var \Swoole\Server */
-    protected \Swoole\Server $server;
+    protected Server $server;
+    protected array $ids = [];
 
-    /**
-     * AbstractPipeMsg constructor.
-     * @param ParserInterface|null $parser
-     */
+   /**
+    * @author Albert <63851587@qq.com>
+    * @param ParserInterface $parser
+    */
     public function __construct(ParserInterface $parser = null)
     {
         $this->parser = $parser ?? new MsgPackParser();
     }
-
+    
     /**
-     * @param $msg
-     * @param int $workerId
-     * @throws InvalidConfigException
+     * @author Albert <63851587@qq.com>
+     * @return void
      */
-    public function sendMessage(&$msg, int $workerId): void
+    public function init(): void
     {
-        $server = ServerHelper::getServer();
-        if (!$server instanceof \Swoole\Server) {
+        $this->server = ServerHelper::getServer()->getSwooleServer();
+        if (!$this->server instanceof Server) {
             throw new InvalidConfigException("only use for swoole_server");
         }
-        $server->sendMessage($this->parser->encode($msg), $workerId);
+        $this->ids = range(0, $this->server->setting['worker_num'] - 1);
     }
 
     /**
-     * @param \Swoole\Server $server
-     * @param int $from_worker_id
-     * @param string $message
+     * @author Albert <63851587@qq.com>
+     * @param [type] $msg
+     * @param integer $workerId
+     * @param integer $wait
+     * @return void
      */
-    public function handle(\Swoole\Server $server, int $from_worker_id, string $message): void
+    public function sendMessage(&$msg, int $workerId, int $wait = 0): void
+    {
+        if ($workerId === -1) {
+            $ids = $this->ids;
+            unset($ids[$this->server->workerId]);
+            $workerId = array_rand($ids);
+        }
+        $msg = [$msg, $wait];
+        $this->server->sendMessage($this->parser->encode($msg), $workerId);
+        if ($wait !== 0) {
+            if (!$chan = Context::get('pipemsg.chan')) {
+                $chan = new Channel(1);
+                Context::set('pipemsg.chan', new Channel(1));
+            }
+            $chan->pop($wait);
+        }
+    }
+
+    /**
+     * @author Albert <63851587@qq.com>
+     * @param Server $server
+     * @param integer $from_worker_id
+     * @param string $message
+     * @return void
+     */
+    public function handle(Server $server, int $from_worker_id, string $message): void
     {
         $data = $this->parser->decode($message);
-        $this->pipeMessage($server, $data);
+        [$data, $wait] = $data;
+        $data !== null && $this->pipeMessage($server, $data);
+        if ($wait !== 0) {
+            if ($data === null) {
+                return;
+            }
+            $null = null;
+            $this->sendMessage($null, $from_worker_id, $wait);
+        }
     }
 
     /**
-     * @param \Swoole\Server $server
-     * @param $data
+     * @author Albert <63851587@qq.com>
+     * @param Server $server
+     * @param [type] $data
+     * @return void
      */
-    abstract public function pipeMessage(\Swoole\Server $server, &$data): void;
+    abstract public function pipeMessage(Server $server, &$data): void;
 }
