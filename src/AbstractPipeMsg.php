@@ -23,15 +23,15 @@ abstract class AbstractPipeMsg implements InitInterface
     protected Server $server;
     protected array $ids = [];
 
-   /**
-    * @author Albert <63851587@qq.com>
-    * @param ParserInterface $parser
-    */
+    /**
+     * @author Albert <63851587@qq.com>
+     * @param ParserInterface $parser
+     */
     public function __construct(ParserInterface $parser = null)
     {
         $this->parser = $parser ?? new MsgPackParser();
     }
-    
+
     /**
      * @author Albert <63851587@qq.com>
      * @return void
@@ -52,7 +52,7 @@ abstract class AbstractPipeMsg implements InitInterface
      * @param integer $wait
      * @return void
      */
-    public function sendMessage(&$msg, int $workerId, int $wait = 0): void
+    public function sendMessage(&$msg, int $workerId, float $wait = 0): void
     {
         if ($workerId === -1) {
             $ids = $this->ids;
