@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Rabbit\Server;
@@ -10,9 +11,9 @@ namespace Rabbit\Server;
 class ServerHelper
 {
     /** @var Server */
-    private static Server $_server;
+    private static ?Server $_server = null;
     /** @var CoServer */
-    private static CoServer $_coServer;
+    private static ?CoServer $_coServer = null;
 
     /**
      * @return CoServer|Server

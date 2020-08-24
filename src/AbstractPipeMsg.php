@@ -19,8 +19,8 @@ use Swoole\Server;
  */
 abstract class AbstractPipeMsg implements InitInterface
 {
-    protected ParserInterface $parser;
-    protected Server $server;
+    protected ?ParserInterface $parser = null;
+    protected ?Server $server = null;
     protected array $ids = [];
 
     /**
@@ -54,9 +54,10 @@ abstract class AbstractPipeMsg implements InitInterface
      */
     public function sendMessage(&$msg, int $workerId, float $wait = 0): void
     {
+        $this->server === null && $this->init();
         if ($workerId === -1) {
             $ids = $this->ids;
-            unset($ids[$this->server->workerId]);
+            unset($ids[$this->server->worker_id]);
             $workerId = array_rand($ids);
         }
         $msg = [$msg, $wait];
