@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Rabbit\Server;
 
-use Rabbit\Base\Contract\InitInterface;
+use Rabbit\Base\App;
 use Rabbit\Base\Core\Context;
 use Rabbit\Base\Exception\InvalidConfigException;
 use Rabbit\Parser\MsgPackParser;
@@ -17,11 +17,9 @@ use Swoole\Server;
  * Class AbstractPipeMsg
  * @package Rabbit\Server
  */
-abstract class AbstractPipeMsg implements InitInterface
+abstract class AbstractPipeMsg
 {
     protected ?ParserInterface $parser = null;
-    protected ?Server $server = null;
-    protected array $ids = [];
 
     /**
      * @author Albert <63851587@qq.com>
@@ -34,19 +32,6 @@ abstract class AbstractPipeMsg implements InitInterface
 
     /**
      * @author Albert <63851587@qq.com>
-     * @return void
-     */
-    public function init(): void
-    {
-        $this->server = ServerHelper::getServer()->getSwooleServer();
-        if (!$this->server instanceof Server) {
-            throw new InvalidConfigException("only use for swoole_server");
-        }
-        $this->ids = range(0, $this->server->setting['worker_num'] - 1);
-    }
-
-    /**
-     * @author Albert <63851587@qq.com>
      * @param [type] $msg
      * @param integer $workerId
      * @param integer $wait
@@ -54,7 +39,15 @@ abstract class AbstractPipeMsg implements InitInterface
      */
     public function sendMessage(&$msg, int $workerId, float $wait = 0): void
     {
-        $this->server === null && $this->init();
+        if (null === $server = ServerHelper::getServer()->getSwooleServer()) {
+            App::warning("Not running in server, use local process");
+            $msg !== null && CommonHandler::handler($this, $msg);
+            return;
+        }
+        if (!$server instanceof Server) {
+            throw new InvalidConfigException("only use for swoole_server");
+        }
+        $this->ids = range(0, $this->server->setting['worker_num'] - 1);
         if ($workerId === -1) {
             $ids = $this->ids;
             unset($ids[$this->server->worker_id]);
