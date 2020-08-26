@@ -11,7 +11,6 @@ use Rabbit\Parser\MsgPackParser;
 use Rabbit\Parser\ParserInterface;
 use Rabbit\Server\ServerHelper;
 use Swoole\Coroutine\Channel;
-use Swoole\Server;
 
 /**
  * Class AbstractPipeMsg
@@ -39,7 +38,7 @@ abstract class AbstractPipeMsg
      */
     public function sendMessage(&$msg, int $workerId, float $wait = 0): void
     {
-        if (null === $server = ServerHelper::getServer()->getSwooleServer()) {
+        if (null === $server = ServerHelper::getServer()) {
             App::warning("Not running in server, use local process");
             $msg !== null && CommonHandler::handler($this, $msg);
             return;
