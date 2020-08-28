@@ -1,15 +1,14 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Rabbit\Server;
 
-use Co\Channel;
-use Co\Socket;
 use Rabbit\Base\Core\Exception;
-use Rabbit\Base\Core\WaitGroup;
-use Rabbit\Base\Helper\FileHelper;
 use Rabbit\Parser\MsgPackParser;
 use Rabbit\Parser\ParserInterface;
+use Swoole\Coroutine\Channel;
+use Swoole\Coroutine\Socket;
 use Swoole\Process;
 use Swoole\Process\Pool;
 use Throwable;
@@ -20,18 +19,12 @@ use Throwable;
  */
 abstract class AbstractProcessSocket
 {
-    /** @var ParserInterface */
     protected ParserInterface $parser;
-    /** @var Pool */
     protected Pool $pool;
-    /** @var int */
     public int $workerId;
-    /** @var array */
     protected array $workerIds = [];
-    /** @var string */
-    protected string $path = '/dev/shm/ProcessSocket';
-    /** @var Channel */
     private Channel $channel;
+    protected bool $isRun = false;
 
     /**
      * ProcessSocket constructor.
@@ -41,7 +34,6 @@ abstract class AbstractProcessSocket
     public function __construct(ParserInterface $parser = null)
     {
         $this->parser = $parser ?? new MsgPackParser();
-        FileHelper::createDirectory($this->path);
         $this->channel = new Channel(1);
     }
 
@@ -90,14 +82,25 @@ abstract class AbstractProcessSocket
     /**
      * @param Process $process
      */
-    public function socketIPC(Process $process)
+    public function socketIPC(Process $process): void
     {
         $socket = $process->exportSocket();
+        $this->isRun = true;
         while (true) {
             [$data, $wait] = $this->parser->decode($this->dealRecv($socket));
             $result = $this->parser->encode($this->handle($data));
-            $wait && $this->dealSend($socket, $result);
+            $wait !== 0 && $this->dealSend($socket, $result);
         }
+    }
+    
+    /**
+     * @author Albert <63851587@qq.com>
+     * @param boolean $isRun
+     * @return void
+     */
+    public function setRun(bool $isRun): void
+    {
+        $this->isRun = $isRun;
     }
 
     /**
@@ -136,7 +139,7 @@ abstract class AbstractProcessSocket
      * @param bool $wait
      * @return mixed
      */
-    public function send(&$data, int $workerId = null, bool $wait = false)
+    public function send(&$data, int $workerId = null, float $wait = 0)
     {
 
         if ($workerId === null) {
@@ -160,8 +163,8 @@ abstract class AbstractProcessSocket
             $this->channel->pop();
         }
 
-        if ($wait) {
-            return $this->parser->decode($this->dealRecv($socket));
+        if ($wait !== 0) {
+            return $this->parser->decode($this->dealRecv($socket, $wait));
         }
     }
 
@@ -177,13 +180,7 @@ abstract class AbstractProcessSocket
         unset($workerIds[$this->workerId]);
         $result = [];
         if ($wait !== 0) {
-            $wg = new WaitGroup();
-            foreach ($workerIds as $id) {
-                $wg->add(function () use ($id, &$result, &$data) {
-                    $result[] = $this->send($data, $id);
-                });
-            }
-            $wg->wait($wait > 0 ? $wait : -1);
+            wgeach($workerIds, fn (int $i, int $id) => $result[] = $this->send($data, $id), $wait > 0 ? $wait : -1);
         } else {
             foreach ($workerIds as $id) {
                 rgo(function () use ($id, &$data) {
