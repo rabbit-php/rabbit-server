@@ -92,7 +92,7 @@ abstract class AbstractProcessSocket
             $wait !== 0 && $this->dealSend($socket, $result);
         }
     }
-    
+
     /**
      * @author Albert <63851587@qq.com>
      * @param boolean $isRun
@@ -111,11 +111,8 @@ abstract class AbstractProcessSocket
     {
         $data = $socket->recv();
         $len = current(unpack('N', substr($data, 0, 4))) + 4;
-        while (true) {
+        while (strlen($data) < $len) {
             $data .= $socket->recv();
-            if (strlen($data) === $len) {
-                break;
-            }
         }
         return substr($data, 4);
     }
@@ -126,6 +123,8 @@ abstract class AbstractProcessSocket
      */
     private function dealSend(Socket $socket, string &$data): void
     {
+        $pLen = pack('N', strlen($data));
+        $data = $pLen . $data;
         while ($data) {
             $tmp = substr($data, 0, 65535);
             $len = $socket->send($tmp);
@@ -142,29 +141,25 @@ abstract class AbstractProcessSocket
     public function send(&$data, int $workerId = null, float $wait = 0)
     {
 
-        if ($workerId === null) {
-            $workerId = array_rand($this->workerIds);
+        if ($workerId === null || $workerId === -1) {
+            $ids = $this->workerIds;
+            unset($ids[$this->workerId]);
+            $workerId = array_rand($ids);
         }
 
-        if ($workerId === $this->workerId) {
-            return $this->handle($data);
-        }
         $socket = $this->getProcess($workerId)->exportSocket();
         $data = $this->parser->encode([$data, $wait]);
-        $pLen = pack('N', strlen($data));
-        $data = $pLen . $data;
         $this->channel->push(1);
         try {
             $this->dealSend($socket, $data);
+            if ($wait !== 0) {
+                return $this->parser->decode($this->dealRecv($socket, $wait));
+            }
         } catch (Throwable $exception) {
             $len = strlen($data);
             throw new \RuntimeException("$len bytes send failed!");
         } finally {
             $this->channel->pop();
-        }
-
-        if ($wait !== 0) {
-            return $this->parser->decode($this->dealRecv($socket, $wait));
         }
     }
 
