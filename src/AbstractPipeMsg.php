@@ -65,12 +65,12 @@ abstract class AbstractPipeMsg
 
     /**
      * @author Albert <63851587@qq.com>
-     * @param Server $server
+     * @param \Swoole\Server $server
      * @param integer $from_worker_id
      * @param string $message
      * @return void
      */
-    public function handle(Server $server, int $from_worker_id, string $message): void
+    public function handle(\Swoole\Server $server, int $from_worker_id, string $message): void
     {
         $data = $this->parser->decode($message);
         [$data, $wait] = $data;
@@ -86,9 +86,9 @@ abstract class AbstractPipeMsg
 
     /**
      * @author Albert <63851587@qq.com>
-     * @param Server $server
+     * @param \Swoole\Server $server
      * @param [type] $data
      * @return void
      */
-    abstract public function pipeMessage(Server $server, &$data): void;
+    abstract public function pipeMessage(\Swoole\Server $server, &$data): void;
 }

@@ -14,7 +14,7 @@ class WorkerPipeMsg extends AbstractPipeMsg
      * @param [type] $data
      * @return void
      */
-    public function pipeMessage(Server $server, &$data): void
+    public function pipeMessage(\Swoole\Server $server, &$data): void
     {
         CommonHandler::handler($this, $data);
     }
