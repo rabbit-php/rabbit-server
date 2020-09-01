@@ -35,7 +35,7 @@ trait ServerTrait
             'dispatch_mode' => 3,
             'log_file' => sys_get_temp_dir() . '/runtime/swoole_web.log',
             'daemonize' => 0,
-            'pid_file' => sys_get_temp_dir() . 'runtime/swooleweb.pid',
+            'pid_file' => sys_get_temp_dir() . '/runtime/swooleweb.pid',
             'enable_reuse_port' => true,
             'http_parse_post' => true,
             'max_coroutine' => 1000000,
