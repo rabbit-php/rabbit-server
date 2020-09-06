@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Rabbit\Server;
@@ -112,8 +113,8 @@ abstract class Server
      */
     public function stop(): void
     {
-        if ($this->swooleServer->setting['pid_file']) {
-            $pid = file_get_contents($this->swooleServer->setting['pid_file']);
+        if ($this->setting['pid_file'] && is_file($this->setting['pid_file'])) {
+            $pid = file_get_contents($this->setting['pid_file']);
             Process::kill(intval($pid));
         }
     }
