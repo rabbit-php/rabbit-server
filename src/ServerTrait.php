@@ -1,10 +1,12 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Rabbit\Server;
 
 use DI\DependencyException;
 use DI\NotFoundException;
+use Rabbit\Base\App;
 use ReflectionException;
 
 /**
@@ -32,7 +34,7 @@ trait ServerTrait
     {
         $this->setting = array_merge([
             'worker_num' => swoole_cpu_num(),
-            'dispatch_mode' => 3,
+            'dispatch_mode' => 1,
             'log_file' => sys_get_temp_dir() . '/runtime/swoole_web.log',
             'daemonize' => 0,
             'pid_file' => sys_get_temp_dir() . '/runtime/swooleweb.pid',
@@ -86,6 +88,7 @@ trait ServerTrait
      */
     protected function workerStart(int $workerId, bool $isTask = false): void
     {
+        App::$id = $workerId;
         foreach ($this->workerStart as $name => $handle) {
             if (!$handle instanceof WorkerHandlerInterface) {
                 /**
