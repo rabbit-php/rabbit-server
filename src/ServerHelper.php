@@ -41,4 +41,23 @@ class ServerHelper
     {
         self::$_coServer = $server;
     }
+    /**
+     * @author Albert <63851587@qq.com>
+     * @param array $msg
+     * @param integer $workerId
+     * @param float $wait
+     * @return boolean
+     */
+    public static function sendMessage(array &$msg, int $workerId, float $wait = 0): bool
+    {
+        $server = self::getServer();
+        if ($server instanceof Server) {
+            $server->pipeHandler->sendMessage($msg, $workerId, $wait);
+        } elseif ($server instanceof CoServer) {
+            $server->getProcessSocket()->send($msg, $workerId, $wait);
+        } else {
+            return false;
+        }
+        return true;
+    }
 }
