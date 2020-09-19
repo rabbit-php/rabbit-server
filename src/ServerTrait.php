@@ -44,7 +44,7 @@ trait ServerTrait
             'reload_async' => true,
         ], $setting);
         \Co::set(array_merge([
-            'hook_flags' => SWOOLE_HOOK_ALL | SWOOLE_HOOK_CURL,
+            'hook_flags' => SWOOLE_HOOK_ALL,
             'enable_preemptive_scheduler' => false
         ], $coSetting));
     }
