@@ -6,11 +6,11 @@ namespace Rabbit\Server;
 
 use Rabbit\Base\App;
 use Rabbit\Base\Core\Context;
-use Rabbit\Base\Exception\InvalidConfigException;
+use Swoole\Coroutine\Channel;
+use Rabbit\Server\ServerHelper;
 use Rabbit\Parser\MsgPackParser;
 use Rabbit\Parser\ParserInterface;
-use Rabbit\Server\ServerHelper;
-use Swoole\Coroutine\Channel;
+use Rabbit\Base\Exception\InvalidConfigException;
 
 /**
  * Class AbstractPipeMsg
@@ -46,14 +46,15 @@ abstract class AbstractPipeMsg
         if (!$server instanceof Server) {
             throw new InvalidConfigException("only use for swoole_server");
         }
-        $this->ids = range(0, $this->server->setting['worker_num'] - 1);
+        $swooleServer = $server->getSwooleServer();
+        $this->ids = range(0, $swooleServer->setting['worker_num'] - 1);
         if ($workerId === -1) {
             $ids = $this->ids;
-            unset($ids[$this->server->worker_id]);
+            unset($ids[$server->worker_id]);
             $workerId = array_rand($ids);
         }
         $msg = [$msg, $wait];
-        $this->server->sendMessage($this->parser->encode($msg), $workerId);
+        $swooleServer->sendMessage($this->parser->encode($msg), $workerId);
         if ($wait !== 0) {
             if (!$chan = Context::get('pipemsg.chan')) {
                 $chan = new Channel(1);
