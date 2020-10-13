@@ -47,15 +47,16 @@ abstract class AbstractPipeMsg
             throw new InvalidConfigException("only use for swoole_server");
         }
         $swooleServer = $server->getSwooleServer();
-        $this->ids = range(0, $swooleServer->setting['worker_num'] - 1);
+
         if ($workerId === -1) {
+            $this->ids = range(0, $swooleServer->setting['worker_num'] - 1);
             $ids = $this->ids;
-            unset($ids[$server->worker_id]);
+            unset($ids[$swooleServer->worker_id]);
             $workerId = array_rand($ids);
         }
         $msg = [$msg, $wait];
         $swooleServer->sendMessage($this->parser->encode($msg), $workerId);
-        if ($wait !== 0) {
+        if ($wait != 0) {
             if (!$chan = Context::get('pipemsg.chan')) {
                 $chan = new Channel(1);
                 Context::set('pipemsg.chan', new Channel(1));
