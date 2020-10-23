@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rabbit\Server;
 
 use Throwable;
+use Rabbit\Web\ResponseContext;
 use Rabbit\Base\Core\BaseObject;
 use Rabbit\Web\DispatcherInterface;
 use Rabbit\Web\ErrorHandlerInterface;
@@ -24,12 +25,12 @@ class ServerDispatcher extends BaseObject implements DispatcherInterface
     protected RequestHandlerInterface $requestHandler;
 
     /**
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @return ResponseInterface
-     * @throws Throwable
+     * @Author Albert 63851587@qq.com
+     * @DateTime 2020-10-23
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @return \Psr\Http\Message\ResponseInterface
      */
-    public function dispatch(ServerRequestInterface $request, ResponseInterface $response): void
+    public function dispatch(ServerRequestInterface $request): ResponseInterface
     {
         try {
             // before dispatcher
@@ -40,7 +41,10 @@ class ServerDispatcher extends BaseObject implements DispatcherInterface
              * @var ErrorHandlerInterface $errorHandler
              */
             $errorHandler = getDI('errorHandler');
+            $response = ResponseContext::get();
             $errorHandler->handle($throw, $response);
+        } finally {
+            return $response;
         }
     }
 }
