@@ -7,7 +7,6 @@ namespace Rabbit\Server;
 use Rabbit\Base\App;
 use Rabbit\Base\Core\Context;
 use Swoole\Coroutine\Channel;
-use Rabbit\Server\ServerHelper;
 use Rabbit\Parser\MsgPackParser;
 use Rabbit\Parser\ParserInterface;
 use Rabbit\Base\Exception\InvalidConfigException;
