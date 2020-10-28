@@ -1,12 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Rabbit\Server;
 
 use Exception;
-use rabbit\App;
-use rabbit\exception\InvalidArgumentException;
-use rabbit\helper\ExceptionHelper;
+use Rabbit\Base\App;
+use Rabbit\Base\Helper\ExceptionHelper;
+use Rabbit\Base\Exception\InvalidArgumentException;
 
 /**
  * Class CommonHandler
