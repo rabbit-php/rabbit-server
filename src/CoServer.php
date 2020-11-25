@@ -21,13 +21,13 @@ abstract class CoServer
 {
     use ServerTrait;
 
-    protected \Co\Server $swooleServer;
-    protected AbstractProcessSocket $socketHandle;
+    protected $swooleServer;
+    protected ?AbstractProcessSocket $socketHandle = null;
 
     /**
      * @return \Co\Server
      */
-    public function getSwooleServer(): \Co\Server
+    public function getSwooleServer()
     {
         return $this->swooleServer;
     }
@@ -56,7 +56,7 @@ abstract class CoServer
      */
     protected function startWithPool(): void
     {
-        $pool = new Pool($this->setting['worker_num'] + count($this->processes), SWOOLE_IPC_UNIXSOCK, 0, true);
+        $pool = new Pool($this->setting['worker_num'], SWOOLE_IPC_UNIXSOCK, 0, true);
         $pool->on('workerStart', function (Pool $pool, int $workerId) {
             App::$id = $workerId;
             Runtime::enableCoroutine();
@@ -67,19 +67,9 @@ abstract class CoServer
                     $this->socketHandle->socketIPC($process);
                 });
             }
-            if ($workerId < $this->setting['worker_num']) {
-                ServerHelper::setCoServer($this);
-                $this->onWorkerStart($workerId);
-                $this->startServer($this->swooleServer = $this->createServer());
-            } else {
-                $keys = array_keys($this->processes);
-                $pro = $this->processes[$keys[$workerId - $this->setting['worker_num']]];
-                if ($pro instanceof ProcessInterface) {
-                    $child = new Process($process);
-                    $child->name($keys[$workerId - $this->setting['worker_num']]);
-                    $pro->run($child);
-                }
-            }
+            ServerHelper::setCoServer($this);
+            $this->workerStart($workerId);
+            $this->startServer($this->swooleServer = $this->createServer());
         });
         $pool->on('workerStop', function (Pool $pool, int $workerId) {
             $this->onWorkerExit($workerId);
