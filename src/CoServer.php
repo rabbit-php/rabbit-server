@@ -7,9 +7,8 @@ namespace Rabbit\Server;
 use DI\DependencyException;
 use DI\NotFoundException;
 use Rabbit\Base\App;
-use Rabbit\Process\Process;
-use Rabbit\Process\ProcessInterface;
 use ReflectionException;
+use Swoole\Process;
 use Swoole\Process\Pool;
 use Swoole\Runtime;
 
@@ -58,7 +57,6 @@ abstract class CoServer
     {
         $pool = new Pool($this->setting['worker_num'], SWOOLE_IPC_UNIXSOCK, 0, true);
         $pool->on('workerStart', function (Pool $pool, int $workerId) {
-            App::$id = $workerId;
             Runtime::enableCoroutine();
             $process = $pool->getProcess();
             if ($this->socketHandle instanceof AbstractProcessSocket) {
@@ -69,7 +67,11 @@ abstract class CoServer
             }
             ServerHelper::setCoServer($this);
             $this->workerStart($workerId);
-            $this->startServer($this->swooleServer = $this->createServer());
+            $this->swooleServer = $this->createServer();
+            Process::signal(SIGTERM, function () {
+                $this->server->shutdown();
+            });
+            $this->startServer($this->swooleServer);
         });
         $pool->on('workerStop', function (Pool $pool, int $workerId) {
             $this->onWorkerExit($workerId);
