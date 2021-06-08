@@ -58,12 +58,9 @@ abstract class CoServer
         $pool = new Pool($this->setting['worker_num'], SWOOLE_IPC_UNIXSOCK, 0, true);
         $pool->on('workerStart', function (Pool $pool, int $workerId) {
             Runtime::enableCoroutine();
-            $process = $pool->getProcess();
             if ($this->socketHandle instanceof AbstractProcessSocket) {
                 $this->socketHandle->workerId = $workerId;
-                rgo(function () use ($process) {
-                    $this->socketHandle->socketIPC($process);
-                });
+                $this->socketHandle->socketIPC();
             }
             ServerHelper::setCoServer($this);
             $this->workerStart($workerId);

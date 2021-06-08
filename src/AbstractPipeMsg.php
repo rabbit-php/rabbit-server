@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Rabbit\Server;
 
 use Rabbit\Base\App;
-use Rabbit\Base\Core\Context;
-use Swoole\Coroutine\Channel;
 use Rabbit\Parser\MsgPackParser;
 use Rabbit\Parser\ParserInterface;
 use Rabbit\Base\Exception\InvalidConfigException;
@@ -18,28 +16,18 @@ use Rabbit\Base\Exception\InvalidConfigException;
 abstract class AbstractPipeMsg
 {
     protected ?ParserInterface $parser = null;
+    private string $key = 'ipc.pipe.msg';
 
-    /**
-     * @author Albert <63851587@qq.com>
-     * @param ParserInterface $parser
-     */
     public function __construct(ParserInterface $parser = null)
     {
         $this->parser = $parser ?? new MsgPackParser();
     }
 
-    /**
-     * @author Albert <63851587@qq.com>
-     * @param [type] $msg
-     * @param integer $workerId
-     * @param integer $wait
-     * @return void
-     */
-    public function sendMessage(&$msg, int $workerId, float $wait = 0): void
+    public function sendMessage(IPCMessage $msg): ?IPCMessage
     {
         if (null === $server = ServerHelper::getServer()) {
             App::warning("Not running in server, use local process");
-            $msg !== null && CommonHandler::handler($this, $msg);
+            $msg->data !== null && CommonHandler::handler($this, $msg->data);
             return;
         }
         if (!$server instanceof Server) {
@@ -47,21 +35,32 @@ abstract class AbstractPipeMsg
         }
         $swooleServer = $server->getSwooleServer();
 
-        if ($workerId === -1) {
-            $this->ids = range(0, $swooleServer->setting['worker_num'] - 1);
-            $ids = $this->ids;
-            unset($ids[$swooleServer->worker_id]);
-            $workerId = array_rand($ids);
+        if ($msg->to === -1) {
+            $ids = $this->workerIds;
+            unset($ids[$this->workerId]);
+            $msg->to = $workerId = array_rand($ids);
+        } elseif ($msg->to === $this->workerId) {
+            $msg->data = $this->pipeMessage($swooleServer, $msg->data);
+            return $msg;
+        } else {
+            $workerId = $msg->to;
         }
-        $msg = [$msg, $wait];
-        $swooleServer->sendMessage($this->parser->encode($msg), $workerId);
-        if ($wait != 0) {
-            if (!$chan = Context::get('pipemsg.chan')) {
-                $chan = new Channel(1);
-                Context::set('pipemsg.chan', new Channel(1));
+
+        if ($msg->wait !== 0) {
+            if (false === $chan = getContext($msg->msgId)[$this->key] ?? false) {
+                $chan = makeChannel();
+                getContext($msg->msgId)[$this->key] = $chan;
             }
-            $chan->pop($wait);
         }
+        $swooleServer->sendMessage($this->parser->encode($msg), $workerId);
+        if ($msg->wait !== 0) {
+            $msg = $chan->pop();
+            if ($msg->error !== null) {
+                throw $msg->error;
+            }
+            return $msg;
+        }
+        return null;
     }
 
     /**
@@ -73,23 +72,22 @@ abstract class AbstractPipeMsg
      */
     public function handle(\Swoole\Server $server, int $from_worker_id, string $message): void
     {
-        $data = $this->parser->decode($message);
-        [$data, $wait] = $data;
-        $data !== null && $this->pipeMessage($server, $data);
-        if ($wait !== 0) {
-            if ($data === null) {
-                return;
+        $msg = $this->parser->decode($message);
+        if ($msg->finished) {
+            if ($chan = getContext($msg->msgId)[$this->key] ?? false) {
+                $chan->push($msg);
             }
-            $null = null;
-            $this->sendMessage($null, $from_worker_id, $wait);
+        } else {
+            $msg->data = $this->pipeMessage($server, $data);
+            $msg->finished = true;
+            if ($msg->wait !== 0 && $msg->from === $from_worker_id) {
+                $msg->to = $msg->to ^ $msg->from;
+                $msg->from = $msg->to ^ $msg->from;
+                $msg->to = $msg->to ^ $msg->from;
+                $this->sendMessage($msg);
+            }
         }
     }
 
-    /**
-     * @author Albert <63851587@qq.com>
-     * @param \Swoole\Server $server
-     * @param [type] $data
-     * @return void
-     */
     abstract public function pipeMessage(\Swoole\Server $server, &$data): void;
 }
