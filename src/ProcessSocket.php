@@ -12,13 +12,11 @@ use Exception;
  */
 class ProcessSocket extends AbstractProcessSocket
 {
-    /**
-     * @param array $data
-     * @return string
-     * @throws Exception
-     */
-    public function handle(array &$data)
+    public function handle(IPCMessage $msg)
     {
-        return CommonHandler::handler($this, $data);
+        if ($msg->isCallable) {
+            $msg->data = $this->closure->decode($msg->data);
+        }
+        return CommonHandler::handler($this, $msg);
     }
 }

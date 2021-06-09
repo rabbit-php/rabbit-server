@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Rabbit\Server;
 
-use Rabbit\Base\Core\Context;
+use Rabbit\Parser\ClosureParser;
 use Rabbit\Parser\MsgPackParser;
 use Rabbit\Parser\ParserInterface;
 use Swoole\Coroutine\Socket;
@@ -19,6 +19,7 @@ use Throwable;
 abstract class AbstractProcessSocket
 {
     protected ParserInterface $parser;
+    protected ParserInterface $closure;
     protected Pool $pool;
     public int $workerId;
     protected array $workerIds = [];
@@ -28,7 +29,8 @@ abstract class AbstractProcessSocket
 
     public function __construct(ParserInterface $parser = null)
     {
-        $this->parser = $parser ?? new MsgPackParser();
+        $this->parser = $parser ?? create(MsgPackParser::class);
+        $this->closure = create(ClosureParser::class);
     }
 
     /**
@@ -90,7 +92,7 @@ abstract class AbstractProcessSocket
                     } else {
                         $msg->finished = true;
                         rgo(function () use ($msg) {
-                            $msg->data = $this->handle($msg->data);
+                            $msg = $this->handle($msg);
                             $msg->wait !== 0 && $this->dealSend($this->getProcess($msg->from)->exportSocket(), $this->parser->encode($msg));
                         });
                     }
@@ -142,7 +144,7 @@ abstract class AbstractProcessSocket
             unset($ids[$this->workerId]);
             $msg->to = $workerId = array_rand($ids);
         } elseif ($msg->to === $this->workerId) {
-            $msg->data = $this->handle($msg->data);
+            $msg = $this->handle($msg);
             return $msg;
         } else {
             $workerId = $msg->to;
@@ -156,6 +158,10 @@ abstract class AbstractProcessSocket
             }
         }
         $socket = $this->getProcess($workerId)->exportSocket();
+        if (is_callable($msg->data)) {
+            $msg->isCallable = true;
+            $msg->data = $this->closure->encode($msg->data);
+        }
         $data = $this->parser->encode($msg);
         $this->dealSend($socket, $data);
         if ($msg->wait !== 0) {
@@ -191,9 +197,5 @@ abstract class AbstractProcessSocket
         return $result;
     }
 
-    /**
-     * @param array $data
-     * @return mixed
-     */
-    abstract public function handle(array &$data);
+    abstract public function handle(IPCMessage $msg);
 }

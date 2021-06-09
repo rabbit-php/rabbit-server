@@ -15,6 +15,7 @@ class IPCMessage
     public int $to = -1;
     public int $msgId;
     public bool $finished = false;
+    public bool $isCallable = false;
 
     public function __construct(array $columns = [])
     {

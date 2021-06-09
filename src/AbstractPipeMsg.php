@@ -5,30 +5,30 @@ declare(strict_types=1);
 namespace Rabbit\Server;
 
 use Rabbit\Base\App;
-use Rabbit\Parser\MsgPackParser;
 use Rabbit\Parser\ParserInterface;
 use Rabbit\Base\Exception\InvalidConfigException;
+use Rabbit\Parser\MsgPackParser;
 
-/**
- * Class AbstractPipeMsg
- * @package Rabbit\Server
- */
 abstract class AbstractPipeMsg
 {
-    protected ?ParserInterface $parser = null;
+    protected ParserInterface $parser;
+    protected ParserInterface $closure;
     private string $key = 'ipc.pipe.msg';
 
     public function __construct(ParserInterface $parser = null)
     {
-        $this->parser = $parser ?? new MsgPackParser();
+        $this->parser = $parser ?? create(MsgPackParser::class);
+        $this->closure = create(ClosureParser::class);
     }
 
     public function sendMessage(IPCMessage $msg): ?IPCMessage
     {
         if (null === $server = ServerHelper::getServer()) {
             App::warning("Not running in server, use local process");
-            $msg->data !== null && CommonHandler::handler($this, $msg->data);
-            return;
+            $msg = CommonHandler::handler($this, $msg);
+            if ($msg->error !== null) {
+                throw $msg->error;
+            }
         }
         if (!$server instanceof Server) {
             throw new InvalidConfigException("only use for swoole_server");
@@ -40,8 +40,10 @@ abstract class AbstractPipeMsg
             unset($ids[$this->workerId]);
             $msg->to = $workerId = array_rand($ids);
         } elseif ($msg->to === $this->workerId) {
-            $msg->data = $this->pipeMessage($swooleServer, $msg->data);
-            return $msg;
+            $msg = CommonHandler::handler($this, $msg);
+            if ($msg->error !== null) {
+                throw $msg->error;
+            }
         } else {
             $workerId = $msg->to;
         }
@@ -52,6 +54,12 @@ abstract class AbstractPipeMsg
                 getContext($msg->msgId)[$this->key] = $chan;
             }
         }
+
+        if (is_callable($msg->data)) {
+            $msg->isCallable = true;
+            $msg->data = $this->closure->encode($msg->data);
+        }
+
         $swooleServer->sendMessage($this->parser->encode($msg), $workerId);
         if ($msg->wait !== 0) {
             $msg = $chan->pop();
@@ -78,7 +86,7 @@ abstract class AbstractPipeMsg
                 $chan->push($msg);
             }
         } else {
-            $msg->data = $this->pipeMessage($server, $data);
+            $msg = $this->pipeMessage($server, $msg);
             $msg->finished = true;
             if ($msg->wait !== 0 && $msg->from === $from_worker_id) {
                 $msg->to = $msg->to ^ $msg->from;
@@ -89,5 +97,5 @@ abstract class AbstractPipeMsg
         }
     }
 
-    abstract public function pipeMessage(\Swoole\Server $server, &$data): void;
+    abstract public function pipeMessage(\Swoole\Server $server, IPCMessage $msg): IPCMessage;
 }

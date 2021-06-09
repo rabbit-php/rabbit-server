@@ -6,8 +6,11 @@ namespace Rabbit\Server;
 
 class WorkerPipeMsg extends AbstractPipeMsg
 {
-    public function pipeMessage(\Swoole\Server $server, &$data): void
+    public function pipeMessage(\Swoole\Server $server, IPCMessage $msg): IPCMessage
     {
-        CommonHandler::handler($this, $data);
+        if ($msg->isCallable) {
+            $msg->data = $this->closure->decode($msg->data);
+        }
+        return CommonHandler::handler($this, $msg);
     }
 }
