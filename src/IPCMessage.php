@@ -10,7 +10,7 @@ class IPCMessage
 {
     public $data;
     public ?Throwable $error = null;
-    public int $wait = 0;
+    public float $wait = 0;
     public int $from = 0;
     public int $to = -1;
     public int $msgId;
