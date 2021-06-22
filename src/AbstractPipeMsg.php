@@ -7,6 +7,7 @@ namespace Rabbit\Server;
 use Rabbit\Base\App;
 use Rabbit\Parser\ParserInterface;
 use Rabbit\Base\Exception\InvalidConfigException;
+use Rabbit\Parser\ClosureParser;
 use Rabbit\Parser\MsgPackParser;
 
 abstract class AbstractPipeMsg
