@@ -9,7 +9,7 @@ use Throwable;
 
 class CommonHandler
 {
-    public static function handler($ctl, IPCMessage $msg): IPCMessage
+    public function handler(object $ctl, IPCMessage $msg): IPCMessage
     {
         try {
             if ($msg->isCallable) {

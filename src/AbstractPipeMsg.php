@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rabbit\Server;
 
 use Rabbit\Base\App;
+use Rabbit\Base\Core\Channel;
 use Rabbit\Parser\ParserInterface;
 use Rabbit\Base\Exception\InvalidConfigException;
 use Rabbit\Parser\ClosureParser;
@@ -26,7 +27,7 @@ abstract class AbstractPipeMsg
     {
         if (null === $server = ServerHelper::getServer()) {
             App::warning("Not running in server, use local process");
-            $msg = CommonHandler::handler($this, $msg);
+            $msg = create(CommonHandler::class)->handler($this, $msg);
             if ($msg->error !== null) {
                 throw $msg->error;
             }
@@ -41,7 +42,7 @@ abstract class AbstractPipeMsg
             unset($ids[$this->workerId]);
             $msg->to = $workerId = array_rand($ids);
         } elseif ($msg->to === $this->workerId) {
-            $msg = CommonHandler::handler($this, $msg);
+            $msg = create(CommonHandler::class)->handler($this, $msg);
             if ($msg->error !== null) {
                 throw $msg->error;
             }
@@ -51,7 +52,7 @@ abstract class AbstractPipeMsg
 
         if ($msg->wait !== 0) {
             if (false === $chan = getContext($msg->msgId)[$this->key] ?? false) {
-                $chan = makeChannel();
+                $chan = new Channel();
                 getContext($msg->msgId)[$this->key] = $chan;
             }
         }

@@ -25,11 +25,6 @@ trait ServerTrait
     protected array $processes = [];
     protected array $setting = [];
 
-    /**
-     * Server constructor.
-     * @param array $setting
-     * @param array $coSetting
-     */
     public function __construct(array $setting = [], array $coSetting = [])
     {
         $this->setting = array_merge([
@@ -49,30 +44,19 @@ trait ServerTrait
         ], $coSetting));
     }
 
-    /**
-     * @return string
-     */
     public function getHost(): string
     {
         return $this->host;
     }
 
-    /**
-     * @return int
-     */
     public function getPort(): int
     {
         return $this->port;
     }
 
-    /**
-     * @throws DependencyException
-     * @throws NotFoundException
-     * @throws ReflectionException
-     */
     protected function beforeStart(): void
     {
-        foreach ($this->beforeStart as $name => $handle) {
+        foreach ($this->beforeStart as $handle) {
             if (!$handle instanceof BootInterface) {
                 $handle = create($handle);
             }
@@ -80,16 +64,10 @@ trait ServerTrait
         }
     }
 
-    /**
-     * @param int $workerId
-     * @param bool $isTask
-     * @throws DependencyException
-     * @throws NotFoundException|ReflectionException
-     */
     protected function workerStart(int $workerId, bool $isTask = false): void
     {
         App::$id = $workerId;
-        foreach ($this->workerStart as $name => $handle) {
+        foreach ($this->workerStart as $handle) {
             if (!$handle instanceof WorkerHandlerInterface) {
                 /**
                  * @var WorkerHandlerInterface $handle
@@ -105,15 +83,9 @@ trait ServerTrait
         }
     }
 
-    /**
-     * @param int $workerId
-     * @throws DependencyException
-     * @throws NotFoundException
-     * @throws ReflectionException
-     */
     protected function onWorkerExit(int $workerId): void
     {
-        foreach ($this->workerExit as $name => $handle) {
+        foreach ($this->workerExit as $handle) {
             if (!$handle instanceof WorkerHandlerInterface) {
                 $handle = create($handle);
             }

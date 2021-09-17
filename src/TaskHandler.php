@@ -11,15 +11,8 @@ use Exception;
  */
 class TaskHandler extends AbstractTask
 {
-    /**
-     * @param int $task_id
-     * @param int $from_id
-     * @param $data
-     * @return bool|mixed
-     * @throws Exception
-     */
-    public function handle(int $task_id, int $from_id, &$data)
+    public function handle(int $task_id, int $from_id, IPCMessage $data)
     {
-        return CommonHandler::handler($this, $data);
+        return create(CommonHandler::class)->handler($this, $data);
     }
 }

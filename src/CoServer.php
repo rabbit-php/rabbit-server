@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Rabbit\Server;
 
-use DI\DependencyException;
-use DI\NotFoundException;
-use Rabbit\Base\App;
-use ReflectionException;
+use Swoole\Coroutine\Http\Server;
+use Swoole\Coroutine\Server as CoroutineServer;
 use Swoole\Process;
 use Swoole\Process\Pool;
 use Swoole\Runtime;
@@ -23,36 +21,22 @@ abstract class CoServer
     protected $swooleServer;
     protected ?AbstractProcessSocket $socketHandle = null;
 
-    /**
-     * @return \Co\Server
-     */
-    public function getSwooleServer()
+    public function getSwooleServer(): CoroutineServer|Server
     {
         return $this->swooleServer;
     }
 
-    /**
-     * @return bool
-     */
     public function getSsl(): bool
     {
         return $this->ssl;
     }
 
-    /**
-     * @throws DependencyException
-     * @throws NotFoundException|ReflectionException
-     */
     public function start(): void
     {
         $this->setProcessTitle($this->name . ": master");
         $this->startWithPool();
     }
 
-    /**
-     * @throws DependencyException
-     * @throws NotFoundException|ReflectionException
-     */
     protected function startWithPool(): void
     {
         $pool = new Pool($this->setting['worker_num'], SWOOLE_IPC_UNIXSOCK, 0, true);
@@ -81,27 +65,18 @@ abstract class CoServer
         $pool->start();
     }
 
-    /**
-     * @return AbstractProcessSocket
-     */
     public function getProcessSocket(): AbstractProcessSocket
     {
         return $this->socketHandle;
     }
 
-    abstract protected function createServer();
+    abstract protected function createServer(): CoroutineServer|Server;
 
-    /**
-     * @param null $server
-     */
-    protected function startServer($server = null): void
+    protected function startServer(CoroutineServer|Server $server = null): void
     {
         $server->set($this->setting);
     }
 
-    /**
-     * @param string $name
-     */
     protected function setProcessTitle(string $name): void
     {
         if (function_exists('swoole_set_process_name')) {

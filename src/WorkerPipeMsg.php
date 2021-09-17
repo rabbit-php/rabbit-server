@@ -11,6 +11,6 @@ class WorkerPipeMsg extends AbstractPipeMsg
         if ($msg->isCallable) {
             $msg->data = $this->closure->decode($msg->data);
         }
-        return CommonHandler::handler($this, $msg);
+        return create(CommonHandler::class)->handler($this, $msg);
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Rabbit\Server;
 
+use Rabbit\Base\Core\Channel;
 use Rabbit\Parser\ClosureParser;
 use Rabbit\Parser\MsgPackParser;
 use Rabbit\Parser\ParserInterface;
@@ -79,8 +80,8 @@ abstract class AbstractProcessSocket
     {
         if ($this->isRun === false) {
             $this->isRun = true;
-            $this->sendChan = makeChannel();
-            $this->recvChan = makeChannel();
+            $this->sendChan = new Channel();
+            $this->recvChan = new Channel();
             foreach ($this->workerIds as $wid) {
                 $socket = $this->getProcess($wid)->exportSocket();
                 loop(function () use ($socket) {
@@ -153,7 +154,7 @@ abstract class AbstractProcessSocket
 
         if ($msg->wait !== 0) {
             if (false === $chan = getContext($msg->msgId)[$this->key] ?? false) {
-                $chan = makeChannel();
+                $chan = new Channel();
                 getContext($msg->msgId)[$this->key] = $chan;
             }
         }

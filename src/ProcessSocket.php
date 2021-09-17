@@ -1,10 +1,8 @@
 <?php
+
 declare(strict_types=1);
 
-
 namespace Rabbit\Server;
-
-use Exception;
 
 /**
  * Class ProcessSocket
@@ -17,6 +15,6 @@ class ProcessSocket extends AbstractProcessSocket
         if ($msg->isCallable) {
             $msg->data = $this->closure->decode($msg->data);
         }
-        return CommonHandler::handler($this, $msg);
+        return create(CommonHandler::class)->andler($this, $msg);
     }
 }

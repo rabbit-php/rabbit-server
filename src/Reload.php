@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Rabbit\Server;
@@ -15,26 +16,17 @@ use Throwable;
  */
 class Reload implements WorkerHandlerInterface
 {
-    /** @var string */
     protected string $path;
-    /** @var array */
+
     protected array $ext = [];
-    /** @var Table */
+
     protected Table $table;
 
-    /**
-     * Reload constructor.
-     * @param string $path
-     */
     public function __construct(string $path)
     {
         $this->path = $path;
     }
 
-    /**
-     * @param int $worker_id
-     * @throws Throwable
-     */
     public function handle(int $worker_id): void
     {
         if ($worker_id === 0) {
@@ -48,18 +40,14 @@ class Reload implements WorkerHandlerInterface
                 $this->table->column('mtime', Table::TYPE_INT, 4);
                 $this->table->create();
                 $this->runComparison();
-                Timer::addTickTimer('reload', 1000, function () {
+                Timer::addTickTimer(1000, function () {
                     $this->runComparison();
-                });
+                }, 'reload');
                 App::info("server hot reload start : use timer tick comparison");
             }
         }
     }
 
-    /**
-     * 扫描文件变更
-     * @throws Throwable
-     */
     private function runComparison()
     {
         $startTime = microtime(true);
@@ -75,7 +63,7 @@ class Reload implements WorkerHandlerInterface
             if ($this->ext && !in_array($ext, $this->ext)) {
                 continue;
             } else {
-                $inode = $file->getInode();
+                $inode = (string)$file->getInode();
                 $mtime = $file->getMTime();
                 array_push($inodeList, $inode);
                 if (!$this->table->exist($inode)) {

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Rabbit\Server;
@@ -22,13 +23,13 @@ class AddListener implements BootInterface
      */
     public function handle(): void
     {
-        foreach ($this->listen as $name => $data) {
+        foreach ($this->listen as $data) {
             list($server, $type, $method, $schema) = $data;
             $config = ObjectFactory::get($schema);
             if ($type) {
                 $port = ServerHelper::getServer()->getSwooleServer()->listen($server->getHost(), $server->getPort(), $type);
             } else {
-                $port = ServerHelper::getServer()->getSwooleServer()->listen($server->getHost(), $server->getPort());
+                $port = ServerHelper::getServer()->getSwooleServer()->listen($server->getHost(), $server->getPort(), SWOOLE_SOCK_TCP);
             }
             foreach ($method as $bind => $callBack) {
                 $port->on($bind, [$server, $callBack]);

@@ -19,17 +19,8 @@ use Psr\Http\Server\RequestHandlerInterface;
  */
 class ServerDispatcher extends BaseObject implements DispatcherInterface
 {
-    /**
-     * @var RequestHandlerInterface
-     */
     protected RequestHandlerInterface $requestHandler;
 
-    /**
-     * @Author Albert 63851587@qq.com
-     * @DateTime 2020-10-23
-     * @param \Psr\Http\Message\ServerRequestInterface $request
-     * @return \Psr\Http\Message\ResponseInterface
-     */
     public function dispatch(ServerRequestInterface $request): ResponseInterface
     {
         try {
