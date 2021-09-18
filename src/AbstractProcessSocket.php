@@ -24,7 +24,7 @@ abstract class AbstractProcessSocket
     protected Pool $pool;
     public int $workerId;
     protected array $workerIds = [];
-    private $sendChan;
+    private Channel $sendChan;
     protected bool $isRun = false;
     private string $key = 'ipc.co.msg';
 
@@ -81,7 +81,6 @@ abstract class AbstractProcessSocket
         if ($this->isRun === false) {
             $this->isRun = true;
             $this->sendChan = new Channel();
-            $this->recvChan = new Channel();
             foreach ($this->workerIds as $wid) {
                 $socket = $this->getProcess($wid)->exportSocket();
                 loop(function () use ($socket) {
