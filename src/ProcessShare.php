@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rabbit\Server;
 
 use Closure;
+use Psr\SimpleCache\CacheInterface;
 use Rabbit\Base\Core\Context;
 use Rabbit\Base\Core\ShareResult;
 use Swoole\Coroutine;
@@ -12,14 +13,20 @@ use Throwable;
 
 class ProcessShare extends ShareResult
 {
-    private static array $shareResult = [];
-
     private static array $size = [];
 
     private static array $cids = [];
 
     const STATUS_PROCESS = -3;
     const STATUS_CHANNEL = -4;
+
+    private CacheInterface $cache;
+
+    public function __construct(string $key, int $timeout = 3)
+    {
+        parent::__construct($key, $timeout);
+        $this->cache = getDI('cache')->getDriver('memory');
+    }
 
     public function getStatus(): int
     {
@@ -30,6 +37,7 @@ class ProcessShare extends ShareResult
     {
         $this->count++;
         $id = ServerHelper::getLockId();
+        $ret = 0;
         try {
             $this->channel->push(1, $this->timeout);
             if ($this->channel->errCode === SWOOLE_CHANNEL_CLOSED) {
@@ -51,11 +59,11 @@ class ProcessShare extends ShareResult
                 $ret = ServerHelper::sendMessage($msg);
                 if ($ret === 1) {
                     $this->result = call_user_func($function);
-                    $msg->data = [static::class . "::setData", [$this->key, $this->result]];
-                    ServerHelper::sendMessage($msg);
+                    $this->cache->set($this->key, $this->result, $this->timeout);
                 } else {
                     $msg->data = [static::class . "::shared", [$this->key, $this->timeout]];
-                    $this->result = ServerHelper::sendMessage($msg);
+                    ServerHelper::sendMessage($msg);
+                    $this->result = $this->cache->get($this->key);
                     Context::set('share.status', self::STATUS_PROCESS);
                 }
             }
@@ -67,11 +75,12 @@ class ProcessShare extends ShareResult
             unset(self::$shares[$this->key]);
             $this->channel->close();
             if ($id >= 0) {
-                ServerHelper::sendMessage(new IPCMessage([
+                $ret === 1 && ServerHelper::sendMessage(new IPCMessage([
                     'data' => [static::class . "::unLock", [$this->key]],
                     'wait' => $this->timeout,
                     'to' => $id
                 ]));
+                $this->cache->delete($this->key);
             }
         }
     }
@@ -88,16 +97,18 @@ class ProcessShare extends ShareResult
 
     public static function unLock(string $name): int
     {
-        self::$size[$name]--;
-        if (self::$size[$name] === 0) {
-            unset(self::$shareResult[$name]);
+        unset(self::$size[$name]);
+        if (self::$cids[$name] ?? false) {
+            $cid = self::$cids[$name];
+            unset(self::$cids[$name]);
+            Coroutine::resume($cid);
         }
-        return self::$size[$name];
+        return 0;
     }
 
-    public static function shared(string $name, int $timeout = 3)
+    public static function shared(string $name, int $timeout = 3): void
     {
-        $data = share($name, function () use ($name, $timeout) {
+        share($name, function () use ($name, $timeout) {
             self::$cids[$name] = Coroutine::getCid();
             if ($timeout > 0) {
                 rgo(function () use ($name, $timeout) {
@@ -110,18 +121,6 @@ class ProcessShare extends ShareResult
                 });
             }
             Coroutine::yield();
-            return self::$shareResult[$name] ?? null;
         });
-        return $data->result;
-    }
-
-    public static function setData(string $name, $data): void
-    {
-        self::$shareResult[$name] = $data;
-        if (self::$cids[$name] ?? false) {
-            $cid = self::$cids[$name];
-            unset(self::$cids[$name]);
-            Coroutine::resume($cid);
-        }
     }
 }
