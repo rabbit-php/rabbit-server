@@ -8,7 +8,7 @@ use Throwable;
 
 class IPCMessage
 {
-    public array|float|int|string|object $data;
+    public $data;
     public ?Throwable $error = null;
     public float $wait = 0;
     public int $from = 0;

@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Rabbit\Server;
 
+use Rabbit\Base\App;
 use Rabbit\Base\Exception\InvalidArgumentException;
 use Throwable;
 
 class CommonHandler
 {
-    public function handler(object $ctl, IPCMessage $msg): IPCMessage
+    public function handle(object $ctl, IPCMessage $msg): IPCMessage
     {
         try {
             if ($msg->isCallable) {
@@ -40,6 +41,7 @@ class CommonHandler
         } catch (Throwable $exception) {
             $msg->data = null;
             $msg->error = $exception;
+            App::error($exception->getMessage());
         } finally {
             return $msg;
         }

@@ -13,6 +13,6 @@ class TaskHandler extends AbstractTask
 {
     public function handle(int $task_id, int $from_id, IPCMessage $data)
     {
-        return create(CommonHandler::class)->handler($this, $data);
+        return create(CommonHandler::class)->handle($this, $data);
     }
 }

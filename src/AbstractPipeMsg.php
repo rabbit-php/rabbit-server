@@ -27,7 +27,7 @@ abstract class AbstractPipeMsg
     {
         if (null === $server = ServerHelper::getServer()) {
             App::warning("Not running in server, use local process");
-            $msg = create(CommonHandler::class)->handler($this, $msg);
+            $msg = create(CommonHandler::class)->handle($this, $msg);
             if ($msg->error !== null) {
                 throw $msg->error;
             }
@@ -42,7 +42,7 @@ abstract class AbstractPipeMsg
             unset($ids[$this->workerId]);
             $msg->to = $workerId = array_rand($ids);
         } elseif ($msg->to === $this->workerId) {
-            $msg = create(CommonHandler::class)->handler($this, $msg);
+            $msg = create(CommonHandler::class)->handle($this, $msg);
             if ($msg->error !== null) {
                 throw $msg->error;
             }
