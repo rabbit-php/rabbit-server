@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rabbit\Server;
 
 use Closure;
+use Rabbit\Base\Core\Context;
 use Rabbit\Base\Core\ShareResult;
 use Swoole\Coroutine;
 use Throwable;
@@ -17,14 +18,12 @@ class ProcessShare extends ShareResult
 
     private static array $cids = [];
 
-    private int $status = 0;
-
     const STATUS_PROCESS = -3;
     const STATUS_CHANNEL = -4;
 
     public function getStatus(): int
     {
-        return $this->status;
+        return Context::get('share.status') ?? 0;
     }
 
     public function __invoke(Closure $function): self
@@ -37,32 +36,27 @@ class ProcessShare extends ShareResult
                 if ($this->e !== null) {
                     throw $this->e;
                 }
-                $this->status = self::STATUS_CHANNEL;
+                Context::set('share.status', self::STATUS_CHANNEL);
                 return $this;
             }
 
             if ($id === -1) {
                 $this->result = call_user_func($function);
             } else {
-                $ret = ServerHelper::sendMessage(new IPCMessage([
+                $msg = new IPCMessage([
                     'data' => [static::class . "::getLock", [$this->key]],
                     'wait' => $this->timeout,
                     'to' => $id
-                ]));
+                ]);
+                $ret = ServerHelper::sendMessage($msg);
                 if ($ret === 1) {
                     $this->result = call_user_func($function);
-                    ServerHelper::sendMessage(new IPCMessage([
-                        'data' => [static::class . "::setData", [$this->key, $this->result]],
-                        'wait' => $this->timeout,
-                        'to' => $id
-                    ]));
+                    $msg->data = [static::class . "::setData", [$this->key, $this->result]];
+                    ServerHelper::sendMessage($msg);
                 } else {
-                    $this->result = ServerHelper::sendMessage(new IPCMessage([
-                        'data' => [static::class . "::shared", [$this->key, $this->timeout]],
-                        'wait' => $this->timeout,
-                        'to' => $id
-                    ]));
-                    $this->status = self::STATUS_PROCESS;
+                    $msg->data = [static::class . "::shared", [$this->key, $this->timeout]];
+                    $this->result = ServerHelper::sendMessage($msg);
+                    Context::set('share.status', self::STATUS_PROCESS);
                 }
             }
             return $this;
