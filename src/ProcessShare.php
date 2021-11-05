@@ -20,6 +20,8 @@ class ProcessShare extends ShareResult
     const STATUS_PROCESS = -3;
     const STATUS_CHANNEL = -4;
 
+    const CACHE_KEY = 'share.status';
+
     private CacheInterface $cache;
 
     public function __construct(string $key, int $timeout = 3)
@@ -30,7 +32,7 @@ class ProcessShare extends ShareResult
 
     public function getStatus(): int
     {
-        return Context::get('share.status') ?? 0;
+        return Context::get(self::CACHE_KEY) ?? 0;
     }
 
     public function __invoke(Closure $function): self
@@ -44,7 +46,7 @@ class ProcessShare extends ShareResult
                 if ($this->e !== null) {
                     throw $this->e;
                 }
-                Context::set('share.status', self::STATUS_CHANNEL);
+                Context::set(self::CACHE_KEY, self::STATUS_CHANNEL);
                 return $this;
             }
 
@@ -64,7 +66,7 @@ class ProcessShare extends ShareResult
                     $msg->data = [static::class . "::shared", [$this->key, $this->timeout]];
                     ServerHelper::sendMessage($msg);
                     $this->result = $this->cache->get($this->key);
-                    Context::set('share.status', self::STATUS_PROCESS);
+                    Context::set(self::CACHE_KEY, self::STATUS_PROCESS);
                 }
             }
             return $this;
@@ -72,16 +74,17 @@ class ProcessShare extends ShareResult
             $this->e = $throwable;
             throw $throwable;
         } finally {
-            unset(self::$shares[$this->key]);
-            $this->channel->close();
             if ($id >= 0) {
-                $ret === 1 && ServerHelper::sendMessage(new IPCMessage([
+                if (ServerHelper::sendMessage(new IPCMessage([
                     'data' => [static::class . "::unLock", [$this->key]],
                     'wait' => $this->timeout,
                     'to' => $id
-                ]));
-                $this->cache->delete($this->key);
+                ])) === 0) {
+                    $this->cache->delete($this->key);
+                }
             }
+            unset(self::$shares[$this->key]);
+            $this->channel->close();
         }
     }
 
@@ -97,13 +100,13 @@ class ProcessShare extends ShareResult
 
     public static function unLock(string $name): int
     {
-        unset(self::$size[$name]);
+        self::$size[$name]--;
         if (self::$cids[$name] ?? false) {
             $cid = self::$cids[$name];
             unset(self::$cids[$name]);
             Coroutine::resume($cid);
         }
-        return 0;
+        return self::$size[$name];
     }
 
     public static function shared(string $name, int $timeout = 3): void
