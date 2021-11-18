@@ -53,18 +53,20 @@ class ProcessShare extends ShareResult
             if ($id === -1) {
                 $this->result = call_user_func($function);
             } else {
-                $msg = new IPCMessage([
+                $ret = ServerHelper::sendMessage(new IPCMessage([
                     'data' => [static::class . "::getLock", [$this->key]],
                     'wait' => $this->timeout,
                     'to' => $id
-                ]);
-                $ret = ServerHelper::sendMessage($msg);
+                ]));
                 if ($ret === 1) {
                     $this->result = call_user_func($function);
                     $this->cache->set($this->key, $this->result, $this->timeout);
                 } else {
-                    $msg->data = [static::class . "::shared", [$this->key, $this->timeout]];
-                    ServerHelper::sendMessage($msg);
+                    ServerHelper::sendMessage(new IPCMessage([
+                        'data' => [static::class . "::shared", [$this->key, $this->timeout]],
+                        'wait' => $this->timeout,
+                        'to' => $id
+                    ]));
                     $this->result = $this->cache->get($this->key);
                     Context::set(self::CACHE_KEY, self::STATUS_PROCESS);
                 }
