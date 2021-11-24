@@ -50,7 +50,11 @@ class ProcessShare extends ShareResult
                 if ($this->e !== null) {
                     throw $this->e;
                 }
-                Context::set(self::CACHE_KEY, self::STATUS_CHANNEL);
+                if (Context::has(self::CACHE_KEY)) {
+                    Context::set(self::CACHE_KEY, self::STATUS_CHANNEL);
+                } else {
+                    Context::set(self::CACHE_KEY, $this->channel->errCode);
+                }
                 return $this;
             }
 
