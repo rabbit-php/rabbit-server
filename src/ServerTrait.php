@@ -27,7 +27,7 @@ trait ServerTrait
 
     public function __construct(array $setting = [], array $coSetting = [])
     {
-        $this->setting = array_merge([
+        $this->setting = [
             'worker_num' => swoole_cpu_num(),
             'dispatch_mode' => 1,
             'log_file' => sys_get_temp_dir() . '/runtime/swoole_web.log',
@@ -37,11 +37,13 @@ trait ServerTrait
             'http_parse_post' => true,
             'max_coroutine' => 1000000,
             'reload_async' => true,
-        ], $setting);
-        \Co::set(array_merge([
+            ...$setting,
+        ];
+        \Co::set([
             'hook_flags' => SWOOLE_HOOK_ALL,
-            'enable_preemptive_scheduler' => false
-        ], $coSetting));
+            'enable_preemptive_scheduler' => false,
+            ...$coSetting
+        ]);
     }
 
     public function getHost(): string
