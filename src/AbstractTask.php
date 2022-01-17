@@ -10,11 +10,8 @@ namespace Rabbit\Server;
  */
 abstract class AbstractTask
 {
-    protected string $logKey = 'Task';
-
-    public function __construct(string $logKey = 'Task')
+    public function __construct(protected string $logKey = 'Task')
     {
-        $this->logKey = $logKey;
     }
 
     abstract public function handle(int $task_id, int $from_id, IPCMessage $data);

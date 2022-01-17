@@ -24,7 +24,7 @@ class ProcessShare extends ShareResult
 
     private CacheInterface $cache;
 
-    public function __construct(string $key, int $timeout = 3, string $type = 'share')
+    public function __construct(protected string $key, protected int $timeout = 3, string $type = 'share')
     {
         parent::__construct($key, $timeout);
         try {

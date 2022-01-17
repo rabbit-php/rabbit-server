@@ -8,7 +8,6 @@ use Rabbit\Base\App;
 use Rabbit\Base\Core\Timer;
 use Rabbit\Base\Helper\FileHelper;
 use Swoole\Table;
-use Throwable;
 
 /**
  * Class Reload
@@ -16,15 +15,12 @@ use Throwable;
  */
 class Reload implements WorkerHandlerInterface
 {
-    protected string $path;
-
     protected array $ext = [];
 
     protected Table $table;
 
-    public function __construct(string $path)
+    public function __construct(protected string $path)
     {
-        $this->path = $path;
     }
 
     public function handle(int $worker_id): void
