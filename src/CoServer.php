@@ -40,7 +40,7 @@ abstract class CoServer
     protected function startWithPool(): void
     {
         $pool = new Pool($this->setting['worker_num'], SWOOLE_IPC_UNIXSOCK, 0, true);
-        $pool->on('workerStart', function (Pool $pool, int $workerId) {
+        $pool->on('workerStart', function (Pool $pool, int $workerId): void {
             Runtime::enableCoroutine();
             if ($this->socketHandle instanceof AbstractProcessSocket) {
                 $this->socketHandle->workerId = $workerId;
@@ -49,12 +49,12 @@ abstract class CoServer
             ServerHelper::setCoServer($this);
             $this->workerStart($workerId);
             $this->swooleServer = $this->createServer();
-            Process::signal(SIGTERM, function () {
+            Process::signal(SIGTERM, function (): void {
                 $this->server->shutdown();
             });
             $this->startServer($this->swooleServer);
         });
-        $pool->on('workerStop', function (Pool $pool, int $workerId) {
+        $pool->on('workerStop', function (Pool $pool, int $workerId): void {
             $this->onWorkerExit($workerId);
         });
         if ($this->socketHandle instanceof AbstractProcessSocket) {

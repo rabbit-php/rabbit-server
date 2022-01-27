@@ -121,10 +121,10 @@ class ProcessShare extends ShareResult
 
     public static function shared(string $name, int $timeout = 3): void
     {
-        share($name, function () use ($name, $timeout) {
+        share($name, function () use ($name, $timeout): void {
             self::$cids[$name] = Coroutine::getCid();
             if ($timeout > 0) {
-                rgo(function () use ($name, $timeout) {
+                rgo(function () use ($name, $timeout): void {
                     sleep($timeout);
                     if (self::$cids[$name] ?? false) {
                         $cid = self::$cids[$name];

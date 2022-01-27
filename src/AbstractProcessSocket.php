@@ -83,7 +83,7 @@ abstract class AbstractProcessSocket
             $this->sendChan = new Channel();
             foreach ($this->workerIds as $wid) {
                 $socket = $this->getProcess($wid)->exportSocket();
-                loop(function () use ($socket) {
+                loop(function () use ($socket): void {
                     $msg = $this->parser->decode($this->dealRecv($socket));
                     if ($msg->finished) {
                         if ($chan = getContext($msg->msgId)[$this->key] ?? false) {
@@ -91,7 +91,7 @@ abstract class AbstractProcessSocket
                         }
                     } else {
                         $msg->finished = true;
-                        rgo(function () use ($msg) {
+                        rgo(function () use ($msg): void {
                             $msg = $this->handle($msg);
                             $msg->wait !== 0 && $this->dealSend($this->getProcess($msg->from)->exportSocket(), $this->parser->encode($msg));
                         });
@@ -186,10 +186,12 @@ abstract class AbstractProcessSocket
         unset($workerIds[$this->workerId]);
         $result = [];
         if ($msg->wait !== 0) {
-            wgeach($workerIds, fn (int $i, int $id) => $result[] = $this->send($msg));
+            wgeach($workerIds, function () use (&$result, $msg): void {
+                $result[] = $this->send($msg);
+            });
         } else {
             foreach ($workerIds as $id) {
-                rgo(function () use ($id, &$data) {
+                rgo(function () use ($id, &$data): void {
                     $this->send($data, $id);
                 });
             }

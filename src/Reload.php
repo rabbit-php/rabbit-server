@@ -36,7 +36,7 @@ class Reload implements WorkerHandlerInterface
                 $this->table->column('mtime', Table::TYPE_INT, 4);
                 $this->table->create();
                 $this->runComparison();
-                Timer::addTickTimer(1000, function () {
+                Timer::addTickTimer(1000, function (): void {
                     $this->runComparison();
                 }, 'reload');
                 App::info("server hot reload start : use timer tick comparison");
@@ -99,14 +99,14 @@ class Reload implements WorkerHandlerInterface
         $inotifyResource = inotify_init();
 
         FileHelper::dealFiles($this->path, [
-            'filter' => function (string $path) use ($inotifyResource) {
+            'filter' => function (string $path) use ($inotifyResource): bool {
                 inotify_add_watch($inotifyResource, $path, IN_CREATE | IN_DELETE | IN_MODIFY);
                 return true;
             }
         ]);
 
         // 加入事件循环
-        swoole_event_add($inotifyResource, function () use (&$lastReloadTime, $inotifyResource) {
+        swoole_event_add($inotifyResource, function () use (&$lastReloadTime, $inotifyResource): void {
             $events = inotify_read($inotifyResource);
             if ($lastReloadTime < time() && !empty($events)) {
                 $lastReloadTime = time();
