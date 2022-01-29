@@ -31,7 +31,7 @@ class ServerDispatcher extends BaseObject implements DispatcherInterface
             /**
              * @var ErrorHandlerInterface $errorHandler
              */
-            $errorHandler = getDI('errorHandler');
+            $errorHandler = service('errorHandler');
             $response = ResponseContext::get();
             $errorHandler->handle($throw, $response);
         } finally {

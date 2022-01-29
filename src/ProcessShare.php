@@ -28,9 +28,9 @@ class ProcessShare extends ShareResult
     {
         parent::__construct($key, $timeout);
         try {
-            $this->cache = getDI('cache')->getDriver($type);
+            $this->cache = service('cache')->getDriver($type);
         } catch (Throwable $e) {
-            $this->cache = getDI('cache')->getDriver('memory');
+            $this->cache = service('cache')->getDriver('memory');
         }
     }
 

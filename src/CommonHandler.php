@@ -22,9 +22,9 @@ class CommonHandler
                         $msg->data = call_user_func_array($route, $params);
                     } elseif (strpos($route, '->')) {
                         [$class, $method] = explode('->', $route);
-                        $msg->data = getDI($class)->$method(...$params);
+                        $msg->data = service($class)->$method(...$params);
                     } elseif (class_exists($route)) {
-                        $msg->data = getDI($route)(...$params);
+                        $msg->data = service($route)(...$params);
                     } elseif (method_exists($ctl, $route)) {
                         $msg->data = $ctl->$route(...$params);
                     } else {
