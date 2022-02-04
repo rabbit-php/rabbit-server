@@ -46,7 +46,7 @@ abstract class Server
 
     abstract protected function createServer(): \Swoole\Server;
 
-    protected function startServer(\Swoole\Server $server = null): void
+    protected function startServer(\Swoole\Server $server): void
     {
         ServerHelper::setServer($this);
         $server->on('start', [$this, 'onStart']);

@@ -4,15 +4,8 @@ declare(strict_types=1);
 
 namespace Rabbit\Server;
 
-use DI\DependencyException;
-use DI\NotFoundException;
 use Rabbit\Base\App;
-use ReflectionException;
 
-/**
- * Trait ServerTrait
- * @package Rabbit\Server
- */
 trait ServerTrait
 {
     protected string $name = 'Rabbit';
@@ -71,9 +64,6 @@ trait ServerTrait
         App::$id = $workerId;
         foreach ($this->workerStart as $handle) {
             if (!$handle instanceof WorkerHandlerInterface) {
-                /**
-                 * @var WorkerHandlerInterface $handle
-                 */
                 $handle = create($handle);
             }
             $handle->handle($workerId);

@@ -18,7 +18,7 @@ abstract class CoServer
 {
     use ServerTrait;
 
-    protected $swooleServer;
+    protected CoroutineServer|Server $swooleServer;
     protected ?AbstractProcessSocket $socketHandle = null;
 
     public function getSwooleServer(): CoroutineServer|Server
@@ -72,7 +72,7 @@ abstract class CoServer
 
     abstract protected function createServer(): CoroutineServer|Server;
 
-    protected function startServer(CoroutineServer|Server $server = null): void
+    protected function startServer(CoroutineServer|Server $server): void
     {
         $server->set($this->setting);
     }
