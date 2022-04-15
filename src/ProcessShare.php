@@ -8,7 +8,6 @@ use Closure;
 use Psr\SimpleCache\CacheInterface;
 use Rabbit\Base\Core\Context;
 use Rabbit\Base\Core\ShareResult;
-use Swoole\Coroutine;
 use Throwable;
 
 class ProcessShare extends ShareResult
@@ -114,7 +113,7 @@ class ProcessShare extends ShareResult
         if (self::$cids[$name] ?? false) {
             $cid = self::$cids[$name];
             unset(self::$cids[$name]);
-            Coroutine::resume($cid);
+            resume($cid);
         }
         return self::$size[$name];
     }
@@ -122,18 +121,18 @@ class ProcessShare extends ShareResult
     public static function shared(string $name, int $timeout = 3): void
     {
         share($name, function () use ($name, $timeout): void {
-            self::$cids[$name] = Coroutine::getCid();
+            self::$cids[$name] = getCid();
             if ($timeout > 0) {
                 rgo(function () use ($name, $timeout): void {
                     sleep($timeout);
                     if (self::$cids[$name] ?? false) {
                         $cid = self::$cids[$name];
                         unset(self::$cids[$name]);
-                        Coroutine::resume($cid);
+                        resume($cid);
                     }
                 });
             }
-            Coroutine::yield();
+            ryield();
         });
     }
 }

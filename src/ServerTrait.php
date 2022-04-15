@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rabbit\Server;
 
 use Rabbit\Base\App;
+use Swoole\Coroutine;
 
 trait ServerTrait
 {
@@ -32,7 +33,7 @@ trait ServerTrait
             'reload_async' => true,
             ...$setting,
         ];
-        \Co::set([
+        Coroutine::set([
             'hook_flags' => SWOOLE_HOOK_ALL,
             'enable_preemptive_scheduler' => false,
             ...$coSetting
