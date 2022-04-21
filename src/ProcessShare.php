@@ -41,9 +41,8 @@ class ProcessShare extends ShareResult
     {
         $this->count++;
         $id = ServerHelper::getLockId();
-        $ret = 0;
+        $ret = $this->channel->push(1, $this->timeout);
         try {
-            $this->channel->push(1, $this->timeout);
             if ($this->channel->errCode === SWOOLE_CHANNEL_CLOSED) {
                 if ($this->e !== null) {
                     throw $this->e;
@@ -56,15 +55,14 @@ class ProcessShare extends ShareResult
                 return $this;
             }
 
-            if ($id === -1) {
+            if ($id === -1 || $ret === false) {
                 $this->result = call_user_func($function);
             } else {
-                $ret = ServerHelper::sendMessage(new IPCMessage([
+                if (ServerHelper::sendMessage(new IPCMessage([
                     'data' => [static::class . "::lock", [$this->key]],
                     'wait' => $this->timeout,
                     'to' => $id
-                ]));
-                if ($ret === 1) {
+                ])) === 1) {
                     $this->result = call_user_func($function);
                     $this->cache->set($this->key, $this->result, $this->timeout);
                 } else {
@@ -82,17 +80,19 @@ class ProcessShare extends ShareResult
             $this->e = $throwable;
             throw $throwable;
         } finally {
-            if ($id >= 0) {
-                if (ServerHelper::sendMessage(new IPCMessage([
-                    'data' => [static::class . "::unLock", [$this->key]],
-                    'wait' => $this->timeout,
-                    'to' => $id
-                ])) === 0) {
-                    $this->cache->delete($this->key);
+            if ($ret !== false) {
+                if ($id >= 0) {
+                    if (ServerHelper::sendMessage(new IPCMessage([
+                        'data' => [static::class . "::unLock", [$this->key]],
+                        'wait' => $this->timeout,
+                        'to' => $id
+                    ])) === 0) {
+                        $this->cache->delete($this->key);
+                    }
                 }
+                unset(self::$shares[$this->key]);
+                $this->channel->close();
             }
-            unset(self::$shares[$this->key]);
-            $this->channel->close();
         }
     }
 }

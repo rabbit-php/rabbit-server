@@ -60,7 +60,7 @@ class ProcessLock
         } catch (Throwable $throwable) {
             throw $throwable;
         } finally {
-            if ($id >= 0 && $ret) {
+            if ($id >= 0 && $ret !== false) {
                 ServerHelper::sendMessage(new IPCMessage([
                     'data' => [static::class . "::unLock", [$this->key]],
                     'wait' => $this->timeout,
