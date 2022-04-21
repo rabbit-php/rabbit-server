@@ -12,9 +12,7 @@ use Throwable;
 
 class ProcessShare extends ShareResult
 {
-    private static array $size = [];
-
-    private static array $cids = [];
+    use LockTrait;
 
     const STATUS_PROCESS = -3;
     const STATUS_CHANNEL = -4;
@@ -25,6 +23,7 @@ class ProcessShare extends ShareResult
 
     public function __construct(protected string $key, protected int $timeout = 3, string $type = 'share')
     {
+        $this->key = 'share-' . $key;
         parent::__construct($key, $timeout);
         try {
             $this->cache = service('cache')->getDriver($type);
@@ -61,7 +60,7 @@ class ProcessShare extends ShareResult
                 $this->result = call_user_func($function);
             } else {
                 $ret = ServerHelper::sendMessage(new IPCMessage([
-                    'data' => [static::class . "::getLock", [$this->key]],
+                    'data' => [static::class . "::lock", [$this->key]],
                     'wait' => $this->timeout,
                     'to' => $id
                 ]));
@@ -95,44 +94,5 @@ class ProcessShare extends ShareResult
             unset(self::$shares[$this->key]);
             $this->channel->close();
         }
-    }
-
-    public static function getLock(string $name): int
-    {
-        if (!isset(self::$size[$name])) {
-            self::$size[$name] = 1;
-            return 1;
-        }
-        self::$size[$name]++;
-        return self::$size[$name];
-    }
-
-    public static function unLock(string $name): int
-    {
-        self::$size[$name]--;
-        if (self::$cids[$name] ?? false) {
-            $cid = self::$cids[$name];
-            unset(self::$cids[$name]);
-            resume($cid);
-        }
-        return self::$size[$name];
-    }
-
-    public static function shared(string $name, int $timeout = 3): void
-    {
-        share($name, function () use ($name, $timeout): void {
-            self::$cids[$name] = getCid();
-            if ($timeout > 0) {
-                rgo(function () use ($name, $timeout): void {
-                    sleep($timeout);
-                    if (self::$cids[$name] ?? false) {
-                        $cid = self::$cids[$name];
-                        unset(self::$cids[$name]);
-                        resume($cid);
-                    }
-                });
-            }
-            ryield();
-        });
     }
 }
