@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Rabbit\Server;
 
 use Closure;
+use Rabbit\Base\Contract\LockInterface;
 use Rabbit\Base\Core\Channel;
 use RuntimeException;
 use Throwable;
 
-class ProcessLock
+class ProcessLock implements LockInterface
 {
     use LockTrait;
 
@@ -34,8 +35,11 @@ class ProcessLock
         return new static($key, $timeout);
     }
 
-    public function __invoke(Closure $function): void
+    public function __invoke(string $name, Closure $function,  bool $next = true, float $timeout = 600): void
     {
+        if (!$this->channel->isEmpty() && !$next) {
+            return;
+        }
         $id = ServerHelper::getLockId();
         $ret = $this->channel->push(1, $this->timeout);
         try {
