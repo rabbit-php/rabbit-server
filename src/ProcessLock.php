@@ -39,7 +39,7 @@ class ProcessLock
         $id = ServerHelper::getLockId();
         $ret = $this->channel->push(1, $this->timeout);
         try {
-            if ($id === -1 || $ret === false) {
+            if ($id < 1 || $ret === false) {
                 call_user_func($function);
             } else {
                 if (ServerHelper::sendMessage(new IPCMessage([
@@ -60,7 +60,7 @@ class ProcessLock
         } catch (Throwable $throwable) {
             throw $throwable;
         } finally {
-            if ($id >= 0 && $ret !== false) {
+            if ($id > 1 && $ret !== false) {
                 ServerHelper::sendMessage(new IPCMessage([
                     'data' => [static::class . "::unLock", [$this->key]],
                     'wait' => $this->timeout,

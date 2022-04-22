@@ -30,7 +30,9 @@ class ServerHelper
 
     public static function setLockId(int $id): void
     {
-        self::$lockId = $id;
+        if ($id > 1) {
+            self::$lockId = $id;
+        }
     }
 
     public static function getLockId(): int

@@ -55,7 +55,7 @@ class ProcessShare extends ShareResult
                 return $this;
             }
 
-            if ($id === -1 || $ret === false) {
+            if ($id < 1 || $ret === false) {
                 $this->result = call_user_func($function);
             } else {
                 if (ServerHelper::sendMessage(new IPCMessage([
@@ -81,7 +81,7 @@ class ProcessShare extends ShareResult
             throw $throwable;
         } finally {
             if ($ret !== false) {
-                if ($id >= 0) {
+                if ($id > 1) {
                     if (ServerHelper::sendMessage(new IPCMessage([
                         'data' => [static::class . "::unLock", [$this->key]],
                         'wait' => $this->timeout,
