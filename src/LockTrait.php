@@ -38,11 +38,7 @@ trait LockTrait
             if ($timeout > 0) {
                 rgo(function () use ($name, $timeout): void {
                     sleep($timeout);
-                    if (self::$cids[$name] ?? false) {
-                        $cid = self::$cids[$name];
-                        unset(self::$cids[$name]);
-                        resume($cid);
-                    }
+                    self::unLock($name);
                 });
             }
             ryield();
