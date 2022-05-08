@@ -90,9 +90,9 @@ class ProcessShare extends ShareResult
                         $this->cache->delete($this->key);
                     }
                 }
-                unset(self::$shares[$this->key]);
                 $this->channel->close();
             }
+            unset(self::$shares[$this->key]);
         }
     }
 }
