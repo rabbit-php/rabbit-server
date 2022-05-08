@@ -15,6 +15,6 @@ if (!function_exists('process_share')) {
 if (!function_exists('lock')) {
     function lock(string $key, callable $func, bool $next = true, int $timeout = 3): void
     {
-        ProcessLock::getLock($key, $timeout)($key, $func, $next, $timeout);
+        ProcessLock::getLock("lock-{$key}", $timeout)($key, $func, $next, $timeout);
     }
 }
