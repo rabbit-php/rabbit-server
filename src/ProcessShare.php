@@ -23,8 +23,7 @@ class ProcessShare extends ShareResult
 
     public function __construct(protected string $key, protected int $timeout = 3, string $type = 'share')
     {
-        $this->key = 'share-' . $key;
-        parent::__construct($this->key, $timeout);
+        parent::__construct($key, $timeout);
         try {
             $this->cache = service('cache')->getDriver($type);
         } catch (Throwable $e) {

@@ -19,7 +19,6 @@ class ProcessLock implements LockInterface
 
     public function __construct(protected string $key, protected int $timeout = 3)
     {
-        $this->key = 'lock-' . $key;
         $this->channel = new Channel();
         if (self::$shares[$key] ?? false) {
             throw new RuntimeException("$key is exists!");
