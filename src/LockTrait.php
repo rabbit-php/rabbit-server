@@ -22,11 +22,15 @@ trait LockTrait
 
     public static function unLock(string $name): int
     {
-        self::$size[$name]--;
         if (self::$cids[$name] ?? false) {
             $cid = self::$cids[$name];
             unset(self::$cids[$name]);
             resume($cid);
+        }
+        self::$size[$name]--;
+        if (self::$size[$name] <= 0) {
+            unset(self::$size[$name]);
+            return 0;
         }
         return self::$size[$name];
     }
