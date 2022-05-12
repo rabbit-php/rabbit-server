@@ -39,17 +39,24 @@ abstract class CoServer
 
     protected function startWithPool(): void
     {
-        $pool = new Pool($this->setting['worker_num'], SWOOLE_IPC_UNIXSOCK, 0, true);
-        $pool->on('workerStart', function (Pool $pool, int $workerId): void {
+        if (1 < $num = $this->setting['worker_num']) {
+            $num++;
+        }
+        $pool = new Pool($num, SWOOLE_IPC_UNIXSOCK, 0, true);
+        $pool->on('workerStart', function (Pool $pool, int $workerId) use ($num): void {
             Runtime::enableCoroutine();
             if ($this->socketHandle instanceof AbstractProcessSocket) {
                 $this->socketHandle->workerId = $workerId;
                 $this->socketHandle->socketIPC();
             }
-            ServerHelper::setServer($this);
-            $this->workerStart($workerId);
-            $this->swooleServer = $this->createServer();
-            $this->startServer($this->swooleServer);
+            if ($num > 1 && $workerId === $num - 1) {
+                @swoole_set_process_name(config('appName') . ':share');
+            } else {
+                ServerHelper::setServer($this);
+                $this->workerStart($workerId);
+                $this->swooleServer = $this->createServer();
+                $this->startServer($this->swooleServer);
+            }
         });
         $pool->on('workerStop', function (Pool $pool, int $workerId): void {
             $this->onWorkerExit($workerId);
@@ -57,7 +64,8 @@ abstract class CoServer
         if ($this->socketHandle instanceof AbstractProcessSocket) {
             $this->socketHandle->setPool($pool);
         }
-        ServerHelper::setNum($this->setting['worker_num']);
+        ServerHelper::setNum($num);
+        ServerHelper::setLockId($num - 1);
         $this->beforeStart();
         $pool->start();
     }
