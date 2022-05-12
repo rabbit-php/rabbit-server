@@ -46,21 +46,18 @@ abstract class CoServer
                 $this->socketHandle->workerId = $workerId;
                 $this->socketHandle->socketIPC();
             }
-            ServerHelper::setCoServer($this);
+            ServerHelper::setServer($this);
             $this->workerStart($workerId);
             $this->swooleServer = $this->createServer();
-            Process::signal(SIGTERM, function (): void {
-                $this->server->shutdown();
-            });
             $this->startServer($this->swooleServer);
         });
         $pool->on('workerStop', function (Pool $pool, int $workerId): void {
             $this->onWorkerExit($workerId);
         });
         if ($this->socketHandle instanceof AbstractProcessSocket) {
-            $this->socketHandle->setWorkerIds($this->setting['worker_num']);
             $this->socketHandle->setPool($pool);
         }
+        ServerHelper::setNum($this->setting['worker_num']);
         $this->beforeStart();
         $pool->start();
     }

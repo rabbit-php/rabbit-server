@@ -12,8 +12,6 @@ class ServerHelper
 {
     private static ?Server $_server = null;
 
-    private static ?CoServer $_coServer = null;
-
     private static int $processNum = 0;
 
     private static int $lockId = -1;
@@ -42,20 +40,12 @@ class ServerHelper
 
     public static function getServer(): null|Server|CoServer
     {
-        if (self::$_server !== null) {
-            return self::$_server;
-        }
-        return self::$_coServer;
+        return self::$_server;
     }
 
-    public static function setServer(Server $server): void
+    public static function setServer(Server|CoServer $server): void
     {
         self::$_server = $server;
-    }
-
-    public static function setCoServer(CoServer $server): void
-    {
-        self::$_coServer = $server;
     }
 
     public static function sendMessage(IPCMessage $msg)

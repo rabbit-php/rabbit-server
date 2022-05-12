@@ -35,22 +35,6 @@ abstract class AbstractProcessSocket
     }
 
     /**
-     * @param int $totalNum
-     */
-    public function setWorkerIds(int $totalNum): void
-    {
-        $this->workerIds = range(0, $totalNum - 1);
-    }
-
-    /**
-     * @return array
-     */
-    public function getWorkerIds(): array
-    {
-        return $this->workerIds;
-    }
-
-    /**
      * @param Pool $pool
      */
     public function setPool(Pool $pool): void
@@ -81,6 +65,7 @@ abstract class AbstractProcessSocket
         if ($this->isRun === false) {
             $this->isRun = true;
             $this->sendChan = new Channel();
+            $this->workerIds = range(0, ServerHelper::getNum() - 1);
             foreach ($this->workerIds as $wid) {
                 $socket = $this->getProcess($wid)->exportSocket();
                 loop(function () use ($socket): void {
@@ -107,7 +92,7 @@ abstract class AbstractProcessSocket
      */
     private function dealRecv(Socket $socket): string
     {
-        $data = $socket->recv();
+        while (false === $data = $socket->recv());
         $len = current(unpack('N', substr($data, 0, 4))) + 4;
         while (strlen($data) < $len) {
             $data .= $socket->recv();

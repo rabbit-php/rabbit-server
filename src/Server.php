@@ -71,6 +71,7 @@ abstract class Server
             }
             $server->on('finish', [$this, 'onFinish']);
         }
+        ServerHelper::setNum($this->setting['worker_num']);
         $server->set($this->setting);
         $this->beforeStart();
     }
