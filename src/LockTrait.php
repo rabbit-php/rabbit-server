@@ -27,8 +27,10 @@ trait LockTrait
             unset(self::$cids[$name]);
             resume($cid);
         }
-        self::$size[$name]--;
-        if (self::$size[$name] <= 0) {
+        if (!(self::$size[$name] ?? false)) {
+            return 0;
+        }
+        if (--self::$size[$name] <= 0) {
             unset(self::$size[$name]);
             return 0;
         }
