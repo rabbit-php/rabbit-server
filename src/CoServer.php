@@ -31,8 +31,9 @@ abstract class CoServer
         return $this->ssl;
     }
 
-    public function start(): void
+    public function start(int $port = null): void
     {
+        $this->port = $port ?? $this->port;
         $this->setProcessTitle($this->name . ": master");
         $this->startWithPool();
     }

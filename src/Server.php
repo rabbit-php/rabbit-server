@@ -39,8 +39,9 @@ abstract class Server
         return $this->type;
     }
 
-    public function start(): void
+    public function start(int $port = null): void
     {
+        $this->port = $port ?? $this->port;
         $this->startServer($this->swooleServer = $this->createServer());
     }
 
