@@ -157,8 +157,7 @@ abstract class Server
             return $result === null ? '' : $result;
         } catch (Throwable $throwable) {
             App::error(
-                VarDumper::getDumper()->dumpAsString(ExceptionHelper::convertExceptionToArray($throwable)),
-                'Task'
+                VarDumper::getDumper()->dumpAsString(ExceptionHelper::convertExceptionToArray($throwable))
             );
             return $throwable->getMessage();
         }
@@ -171,8 +170,7 @@ abstract class Server
             $task->finish($result === null ? '' : $result);
         } catch (Throwable $throwable) {
             App::error(
-                VarDumper::getDumper()->dumpAsString(ExceptionHelper::convertExceptionToArray($throwable)),
-                'Task'
+                VarDumper::getDumper()->dumpAsString(ExceptionHelper::convertExceptionToArray($throwable))
             );
             $task->finish($throwable->getMessage());
         }
